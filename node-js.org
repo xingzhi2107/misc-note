@@ -1,0 +1,13 @@
+#+TITLE: Node 琐碎笔记
+
+* 如何Debug？
+第一步，通过 =--inspect-brk= 参数来启动nodejs。
+  #+name: debug
+  #+begin_src shell
+$ node --inspect-brk index.js
+Debugger listening on 127.0.0.1:9229.
+To start debugging, open the following URL in Chrome:
+    chrome-devtools://devtools/bundled/inspector.html?experiments=true&v8only=true&ws=127.0.0.1:9229/dc9010dd-f8b8-4ac5-a510-c1a114ec7d29
+  #+end_src
+
+第二步，在Chrome浏览器里打开运行命令后产生的 =chrome-debtools://...= 链接。或者安装Chrome的 =NIM= 插件。

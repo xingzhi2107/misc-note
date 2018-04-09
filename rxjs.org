@@ -1,0 +1,107 @@
+#+TITLE: Rxjs Note
+
+* Table Of Contents
+* Dictionary
+  - observer [əb'zɜrvər]: n. 观察员；观察者；观察家；观测者 | 网络 观察者模式；观察家报；观察器
+  - observable [əb'zɜrvəb(ə)l]: n. 值得注意的东西；感觉到[看得见]的事物；【物】可观察量；观察算符 | adj. 能看得到的；能察觉到的 | 网络 看得见的；可观察到的；可观测量
+  - subscribe [səb'skraɪb]: v. 预订；申请；定期订购（或订阅等）；定期交纳（会员费） | 网络 签署；认购；捐助
+  - subject ['sʌb.dʒekt]: n. 学科；主题；问题；话题 | adj. 取决于；可能受…影响的；易遭受…的；视…而定 | v. 使臣服；使顺从；（尤指）压服 | 网络 科目；主语；主体
+  - creation [kri'eɪʃ(ə)n]: n. 创作；创造；创建；作品 | 网络 创新；创作物；造物弄人
+  - combination [.kɑmbɪ'neɪʃ(ə)n]: n. 结合；联合；混合；结合体 | 网络 组合；混合性皮肤；合并
+  - interval ['ɪntərvəl]: n. 间歇；音程；休息时间；（其他事情）穿插出现的间隙 | 网络 间隔；区间；时间间隔
+* Basic Therory
+  - obser
+  - subscribe
+* Operators
+** Creation Operators
+   Operators for creation.
+*** from (ish: ObservableInput, mapFn: function, thisArg: any, scheduler: Scheduler): Observable
+    Turn an array, promise, or iterable into a observable
+    
+    #+name: Example 1: Observable from array
+    #+begin_src javascript
+      const arraySource = Rx.Observable.from([1, 2, 3, 4, 5]);
+
+      const subscribe = arraySource.subscribe(val => console.log(val));
+    #+end_src
+    
+    #+name: Example 2: Observable from promise
+    #+begin_src javascript
+      const promiseSource = Rx.Observable.from(new Promise(resolve => resolve('hello, world!')));
+
+      const subscribe = promiseSource.subscribe(val => console.log(val));
+    #+end_src
+    
+*** of (...values, scheduler: Scheduler): Observable
+    Emit variable amount of values in a sequence.
+    
+    #+name: Example 1: Emitting an object, array and function
+    #+begin_src javascript
+      const source = Rx.Observable.of({}, [1, 2, 3], function hello() {});
+      const subscribe = source.subscribe(val => console.log(val));
+      // {}, [1, 2, 3], function hello
+    #+end_src
+    
+** Combination Operators
+   Allow the joining of emmits from multiple observable.
+ 
+*** concat (observables: ...*): Observable
+    Subscribe to observables in order as previous completes, emit values.
+    
+    Note:
+     - if throunghput order is not primary concern, try `merge' instead!
+    
+    #+name: Example 1: concat as instance method
+    #+begin_src javascript
+      const sourceOne = Rx.Observable.of(1, 2, 3);
+      const sourceTwo = Rx.Observable.of(3, 2, 1);
+
+      const example = sourceOne.concat(sourceTwo);
+      const subscribe = example.subscribe(val => console.log(val));
+      // ==> 1 2 3 3 2 1
+    #+end_src
+    
+    #+name: Example 2: concat as static method
+    #+begin_src javascript
+      const startObs = Rx.Observable.of({
+        status: 'loading'
+      });
+
+      const loadingPromise = new Promise((resolve, reject) => {
+        // do ajax request, ba la ba la
+      }).then((data) => {
+        return {
+          status: 'loaded',
+          data: data
+        }
+      }).catch((msg) => {
+        return {
+          status: 'failed',
+          message: msg
+        }
+      })
+
+      const doLoadingObs = Rx.Observable.fromPromise(loadingPromise)
+
+      const example = Rx.Observable.concat(
+        startObs,                     // before loading, emit 'loading', UI show loading effect
+        doLoadingObs                  // done, UI show data or report failed message
+      )
+
+    #+end_src
+
+    #+name: Example 3: concat with source that doesn't complete
+    #+begin_src javascript
+      const neverStopObs = Rx.Observalbel.interval(1000);
+      const neverRunObs = Rx.Observalbel.of('this', 'never', 'run');
+
+      const example = Rx.concat(
+        neverStopObs,
+        neverRunObs
+      )
+
+      const subscribe = example.subscribe(val => console.log(val));
+      // 1 2 3 4....
+    #+end_src
+    
+*** combinationLatest

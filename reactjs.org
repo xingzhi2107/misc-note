@@ -1,0 +1,12 @@
+#+TITLE: Reactjs
+
+* 2018-03-27
+  在redux中：state、reducer、action、api、container component之间有没有什么关系？能否根据文件夹类归。比如，在Todo那个example中，todo item相关的action、reducer、api都放到todo item的container component下？
+  这里的问题在于，action、reducer会不会被别的“model”复用？比如被“footer”这个ui component调用？
+  
+  我有这种想法的原因是总感觉一些action、reducer、api、state只跟某个container component有关，但是却分散在不同的文件夹里。
+  
+  也许这是因为Todo这个example过于简单，所以感觉不出这样分的必要吧！
+
+  
+  几天没有学习reactjs，突然不知道从何入手？看开源项目？自己写东西？比较迷茫。
