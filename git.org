@@ -2,6 +2,7 @@
 
 * git拉取某个版本的某个文件，存成一个新的名称
   很多时候，我们需要把某个版本的文件拉取出来作为参照，但是又不能覆盖现有的版本。
+  [[https://stackoverflow.com/questions/888414/git-checkout-older-revision-of-a-file-under-a-new-name][方法]]：
   #+BEGIN_SRC bash
   $ git show d2ade3fd:./xxx.js > xxx_old.js # d2ade3fd是版本号
   #+END_SRC
