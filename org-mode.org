@@ -1,0 +1,19 @@
+#+TITLE: Org Mode使用琐记
+
+* Table相关
+** 固定Table的列宽
+   [[https://orgmode.org/manual/Column-width-and-alignment.html][3.2 Column width and alignment]]
+
+   example:
+   |---------------+----------+----------------------|
+   | <13>          | <8>      | <20>                 |
+   | org-mode      | habitica | note                 |
+   |---------------+----------+----------------------|
+   | todo-keyword  | type     |                      |
+   | title         | title    |                      |
+   | section text  | notes    |                      |
+   | due date      | date     |                      |
+   | repeat (*)    | repeat   | 比较复杂，与frequency, repeat, everyX有关 |
+   |---------------+----------+----------------------|
+
+   使用 =org-table-edit-field= 显示、编辑被隐藏起来的字段。
