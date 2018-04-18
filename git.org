@@ -6,3 +6,65 @@
   #+BEGIN_SRC bash
   $ git show d2ade3fd:./xxx.js > xxx_old.js # d2ade3fd是版本号
   #+END_SRC
+
+* <pathspec> -- path special
+  git有很多命令可以指定=文件的作用范围=。=pathspec=大概就是这样的东西。它的格式几乎跟linux的路径语法是一致的，下面结合例子来对它有个感性认知。
+
+  1. 相对路径:
+     #+BEGIN_SRC bash
+     $ git rm -- ./a.txt             # git rm当前目录的a.txt
+     #+END_SRC
+
+  2. 绝对路径:
+     这里是的=根目录=指的是=git仓库根目录=。
+
+     #+BEGIN_SRC bash
+     $ git rm -- :/a.txt             # git rm掉仓库根目录下的a.txt
+     #+END_SRC
+  
+  3. 集合路径:
+
+     #+BEGIN_SRC bash
+     $ git rm -- :/{a,b,c}/k.txt     # git rm掉/a/k.txt, /b/k.txt, /c/k.txt这三个文件 
+     #+END_SRC
+
+     注意：集合里的逗号前后不能有空格。 ~{a, b, c}~这种写法会无法通过。这个语法跟很多linux的命令是一致的，比如~ls {dirA,dirB}~。
+
+  4. 通配符:
+     这也是必不可少的。
+     #+BEGIN_SRC bash
+     $ git rm -- *.json              # git rm掉当前目录下所有以json为后缀名的子文件
+     #+END_SRC
+
+  5. 组合多个=pathspec=
+     用引号包住=pathspec=，用=空格= 隔离多个=pathspec=就可以了。
+     #+BEGIN_SRC bash
+     $ git rm -- '*.json' ':./a.txt' 
+     #+END_SRC
+
+  6. 更多的东西
+     =pathspec= 还支持类似：“排除某个文件夹”(~:(exclude)/path/to/exclude~)，“某个文件夹的所有文件”(~:/dira/**~)等等之类的操作。更多内容见[[https://git-scm.com/docs/gitglossary#gitglossary-aiddefpathspecapathspec][pathspec]]。
+
+   
+  =pathspec=大概就这几种格式。有很多命令可以使用=pathspec=，add、rm、log、grep、clean、checkout、ls-files。接下来我们举几个比较有用的实战例子。
+
+** 显示某个文件的历史commit
+   :PROPERTIES:
+   :ALIAS:    git list history commit for a special file
+   :END:
+
+   直接给 ~git log~ 指定一个 =pathspec= 到这个文件就可以了。
+
+   #+BEGIN_SRC bash
+   $ git log -- ./a.txt
+   #+END_SRC
+
+** 更加精确的git grep
+   :PROPERTIES:
+   :ALIAS:    git grep special file type or exclude special dir path
+   :END:
+   很多时候，对整个git项目进行~git grep~的结果会非常的多，所以我们需要更加精确的grep。下面是一个例子：
+
+   #+BEGIN_SRC bash
+     $ git grep 'Something' -- '*.json' ':(exclude)/xxx' # 在所有*.json（排除/xxx目录下的）中grep搜索'Something'
+   #+END_SRC
