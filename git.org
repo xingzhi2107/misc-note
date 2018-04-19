@@ -68,3 +68,19 @@
    #+BEGIN_SRC bash
      $ git grep 'Something' -- '*.json' ':(exclude)/xxx' # 在所有*.json（排除/xxx目录下的）中grep搜索'Something'
    #+END_SRC
+* 分支管理
+** 删除远程分支
+   push分支的时候带上~--delete~参数。
+
+   #+BEGIN_SRC bash
+   $ git push origin ---delete xxx-branch
+   #+END_SRC
+
+* 分支合并
+** rebase workflow
+   rebase的流程核心的步骤有两步：
+   1. 支线分支rebase主分支，保证支线的commmit在排列在主分支之上；
+   2. 然后主分支再rebase支线分支，因为支线分支的committ在主分支之上，所以会直接=fast forward=
+   
+   但是rebase是一种破坏性操作，即你会破坏别人的=base=。所以为了保证“原子性”，实际的操作过程比较多。详见：[[https://randyfay.com/content/rebase-workflow-git][rebase-workflow]].
+
