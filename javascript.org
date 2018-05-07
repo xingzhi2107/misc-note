@@ -1,0 +1,142 @@
+#+TITLE: JavaScript
+
+
+* 继承与原型链
+
+*** 我的一点个人理解
+  继承是复用代码的一种常用手段。js的继承机制采用原型链~ 个人感觉这可能仅仅是为了方便，可以直接“草率”的写下一个对象“面量”，而不用Java那样什么都经过精心的绘制对象的蓝图（类），然后才能“实例化”。它的哲学貌似是直接以某个对象为蓝图~ 我不知道这样做是好事坏！对于遍地需要大型前端项目的今天，基于原型的继承貌似有点承受不住了！
+
+  JavaScript的继承数据结构——原型链，需要强调的是 *原型* 二字，也就是上面提到的内容，而不是 *链* 这个字。目前我个人所知道的继承机制都是采用链式结构，包括Java。这点很好理解，因为继承是有“先来后到”的，继承经常需要“纠结”的就是顺序问题。链式结构自然的描述了这种先来后到的关系。
+
+*** 原型链的数据结构
+    原型链有点像数据结构中的链表，总体而言它包含两部分:
+    - 本节点 :: 承载属于对象自身的属性、方法
+    - =__proto__= :: 指向自身原型的引用（非公开接口）
+
+    当我们对一个对象进行属性访问的时候，如:  ~obj.name~，js的解析器会先从obj的“本节点”中找是否有name这个属性，如果没有则会通过=__proto__=向上查找，直到找到这个属性或者=__proto__=指向null为止。
+
+    需要说明的是，=__proto__=不是一个公开接口，在es6中我们可以通过Object.getPrototypeof与Object.setPrototypeof来取代=__proto__=
+
+*** 写时“复制”
+    在JS里，原型只是提供“代码”的复用，也就是“读”。但是在“写”的时候，就没有原型链什么事了。
+
+    #+BEGIN_SRC javascript
+      var a = Object.create({"name": "hehe"});
+
+      a.name;                         // "hehe"
+      a.hasOwnProperty("name");       // --> false
+
+      a.name = "haha";                // 在“写”的时候，创建a自己的"name"属性
+      a.hasOwnProperty("name");       // --> true
+    #+END_SRC
+
+    JS的这种写时“复制”（新建）的机制，符合原型与实例隔离的需求。
+    
+*** 继承
+    最简单的继承方式当然是Object.create()了，这似乎也符合基于原型继承的初衷，但是实际上我们很少这么使用。我们更多的还是像Java那样描述一幅“蓝图”，然后再生产实例......(ps. 所以，我们为什么还要用原型继承)。
+    构造器就是那幅“蓝图”
+
+    简单的例子：
+    #+BEGIN_SRC javascript
+
+      // 构造函数用来初始化实例的属性值
+      // js是很动态的，所以实际上也可以在构造函数里新建属性，未必需要写到prototype里
+      function Animal (weight, age) {
+          this.weight = weight;
+          this.age = age;
+      }
+
+      // 定义“原型”也就是“蓝图”
+      Animal.prototype = {
+          weight: undefined,
+          age: undefined,
+          display () {
+              console.log(`A animal with weight: $(weight), age: $(age)`);
+          }
+      }
+
+      // 定义静态属性。当然了，也可以定义静态方法
+      Animal.kindName = "Animal";
+
+      let animal1 = new Animal(23, 34);
+
+      animal1.weight;                 // 23
+
+      // 静态属性不存在于实例上
+      animal1.kindName;               // undefined
+
+      // 通过new创建的实例都会有一个constructor属性指向构造函数
+      // 除非你在prototype里也顶一个了一个constructor把它覆盖了
+      animal1.constructor === Animal1; // true
+    #+END_SRC
+
+    接下来开始继承，以Cat继承自Animal为例:
+    #+BEGIN_SRC javascript
+      function Cat(weight, age, color) {
+          Animal.call(this, weight, age); // 调用父类来帮助我们初始化属性
+          this.color = color;
+      }
+
+      // Cat的原型继承自Animal的原型
+      Cat.prototype = Object.create(Animal.prototype, {
+          color: {
+              value: null,
+              enumerable: true,
+              configurable: true,
+              writable: true
+          },
+          catchMouse () {
+              console.log('我在抓老鼠');
+          }
+      });
+
+      // 将Cat的prototype的constructor重新指向Cat
+      Cat.prototype.constructor = Cat;
+
+      var cat = new Cat(23, 43, 'red');
+    #+END_SRC
+    继承的关键在于指向好原型链，通过Object.create来创建并隔离父类的原型而不是直接让子类的prototype等于父类的prototype，这样做不到修改隔离。
+
+*** Object的API
+    js中，几乎所有的对象都继承自Object，所以Object的API几乎适用于所有对象
+
+
+    |          |                  |                                                  | <30>                           |
+    | 分类     | 子类             | API                                              | 作用                           |
+    |----------+------------------+--------------------------------------------------+--------------------------------|
+    |          |                  | Object.getPrototypeOf(obj)                       | 获取obj的原型                  |
+    | 原型操作 |                  | Object.setPrototypeOf(obj, protoObj)             | 指定obj的原型                  |
+    |          |                  | Object.create(protoObj [,propritesDefineDesc])   | 以protoObj为原型创建对象       |
+    |----------+------------------+--------------------------------------------------+--------------------------------|
+    |          | self             | obj.hasOwnproperty(propName)                     |                                |
+    |          | self, enumerable | Object.keys(obj)                                 |                                |
+    | 属性读取 | self, enumerable | Object.values(obj)                               |                                |
+    |          | self, enumerable | Object.entries(obj)                              |                                |
+    |          | self, enumerable | Object.assign(target, src1, src2...)             |                                |
+    |          | enumerable       | for...in                                         |                                |
+    |          | self, no Symbols | Object.getOwnPropertyNames(obj)                  |                                |
+    |          | self, symbols    | Object.getOwnPropertySymbols(obj)                |                                |
+    |----------+------------------+--------------------------------------------------+--------------------------------|
+    | 属性创建 |                  | Object.defineProperty(obj, propName, defineDesc) |                                |
+    |          |                  | Object.defineProperties(obj, defineDescs)        |                                |
+    |----------+------------------+--------------------------------------------------+--------------------------------|
+    | 属性描述 |                  | Object.getOwnPropertyDescriptor(obj, propName)   | 获取属性的*描述*               |
+    |          |                  | Object.getOwnPropertyDescriptors(obj)            |                                |
+    |----------+------------------+--------------------------------------------------+--------------------------------|
+    | 对象约束 |                  | Object.preventExtensions(obj)                    | 不能新增属性                   |
+    |          |                  | Object.seal(obj)                                 | 不能新增属性，不能改已有属性config |
+    |          |                  | Object.freeze(obj)                               | 不能新增/删除属性，不能改已有属性config，不能改原型 |
+    |          |                  | Object.isExtensions(obj)                         |                                |
+    |          |                  | Object.isSeal(obj)                               |                                |
+    |          |                  | Object.isFreeze(obj)                             |                                |
+    |----------+------------------+--------------------------------------------------+--------------------------------|
+    - 获取当前对象的原型 :: Object.getPrototypeOf()
+    - 设置当前对象的原型 :: Object.setPrototypeOf()
+    - 以一个对象为原型创建一个实例 :: Object.create(objAsProt)
+  
+  - constructor :: 构造函数
+  - constructor.prototype :: prototype属性
+  - 原型链 :: constructor.prototype.constructor.prototype
+  - 什么是实例属性/方法？ :: ClassA.prototype上的属性或方法即实例属性或方法
+  - 什么是静态属性/方法？ :: ClassA上的属性或方法即静态的
+
