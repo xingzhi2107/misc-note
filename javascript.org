@@ -197,8 +197,54 @@
    这也解释了为什么setTimeout时间为0的时候它的回调函数不是立即执行，因为它还要被推入队列中。甚至它要过很久很久才会被执行到，比如栈里正在执行的函数block住了（这个死循环、或者调用window.alert）。
 
 ** 最后
-   我觉得Mozilla的文章质量变得很高的感觉，一篇下来简明扼要，[[https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop][Concurrency model and Event Loop]]。
+   我觉得Mozilla的文章质量变得很高的感觉，一篇下来简明扼要，[[https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop][Concurrency model and Event Loop]]。我决定，把它上面关于web的文章都看一遍，或精读，或泛读。
 
    异步编程、Event Loop都不是JS专属，所以我学习JS的Event Loop的时候，很想知道异步编程的本质是什么？除了异步编程还有哪些编程模式？翻来翻去，我找到了这篇博客，[[http://cs.brown.edu/courses/cs196-5/f12/handouts/async.pdf][Introduction to Asynchronous Programming]]，但感觉还需要进一步的了解，比如可以去体验一下多线程编程，去更深入的了解“异步模型”底层的实现（文中说到的libevent库）。
 
    JS的Event Loop其实还没有完毕，因为Promise的加入，这个模型貌似被做了一些hardcode，nodejs也有这样的hardcode，需要进一步了解。这个另起篇幅描述吧，没必要放在一起说。
+* Micro Task与Macro Task
+  有些时候，我们需要让一段代码在下一个event loop任务来临之前“立即执行”~
+  于是浏览器（不同平台实现方式不一定相同）提供了一个新的任务队列叫“Mirco Task Queue”（微任务队列），之前的任务队列就叫做“Macro Task Queue（宏任务队列）”。
+
+  “微”就是指“微小”，而“宏”就是指“宏观”。顾明思意，“Micro Task Queue”其实是对“Macro Task Queue”的一个辅助。当执行栈空的时候——也就是下一个event loop任务来临之前，js引擎会去检查“Mirco Task Queue”是不是为空，如果不为空，则把里面的任务都执行了。直到它空了之后，才会去“Macro Task Queue”取下一个任务压入栈中执行。
+
+  目前，nodejs的process.nextTick、promise里的onResolve与onRejct都是走“Micro Task Queue”。process.nextTick我能理解它为什么存在，我不能理解的是为什么promise的onResolve与onRejct要这样设计？这个或许应该去深入思考“回调的处理的方式”这个主题。
+
+* JS的GC机制与内存泄露排查
+** 现存的GC算法
+*** 查找算法
+    查找算法用来找出可以被GC的内存块
+    - 引用计数 :: 简单，但无法解决相互引用问题
+    - 根搜索算法 :: 从根节点出发进行搜索，不能被搜索到都表示需要被GC，又称标记清除算法。这种算法，在搜索的时候，一般需要让“世界静止”，当然也有一些“剪枝”优化，如增量GC、与运行时并行、多个GC并发且与运行时并行
+
+    现在，几乎所有的浏览器都采用根搜索算法来进行GC。
+
+*** GC算法
+    GC算法用来处理如何清除需要被GC的内存块，以及如何管理还有用的内存
+    - 复制算法 :: 将有用的内存逐一复制到一个新的区域，然后清除原有的区域。缺点：耗内存，也耗时。
+    - 清除算法 :: 直接将需要被清除的内存块清除。缺点：内存碎片。
+    - 压缩算法 :: 清除完需要被清除的内存块后，把剩余的内存块向一端移动。缺点：耗时
+
+*** 新兴的GC机制——Rust的所有权机制
+    简单说下关键字就好了:
+    - 所有权 owner
+    - 转移 move
+    - 借用 borrow
+    - 可变借用 mut-borrow
+** V8 GC策略
+   以下笔记来自[[https://alinode.aliyun.com/blog/37][解读 V8 GC Log（一）: Node.js 应用背景与 GC 基础知识]]的摘要。
+
+   另一篇文章：[[https://alinode.aliyun.com/blog/38][解读 V8 GC Log（二）: 堆内外内存的划分与 GC 算法]]也写得非常的好，这里不多记录，因为些得比较细、比较底层。读了一遍，让我印象最深的是“写屏障”，正是这种机制（不单单如此），让V8可以增量GC。
+
+*** 弱分代假设
+    弱分代假设（The Weak Generational Hypothesis）指的是：
+    1. 大部分对象死得早
+    2. 那些死得不早的对象通常倾向于永生
+
+    因此与JVM类似，V8也引入了对象分代。主要分“新生代”、“老生代”。简单得讲，就是所有对象一开始都是“新生代”，经过一定次数GC还依然存活的对象就晋升为“老生代”。通过分代对不同的代采用不同的GC策略。简单的说，“老生代”的GC频率比较低。
+* Set与Map
+  现在想到使用set/map的一个好处是，它可以按插入的顺序来进行遍历，而object做不到着一点。
+* JS的深拷贝
+  坑点：
+  - 循环引用
+  - 一些类型不会拷贝：函数、正则表达式等，需要手动处理
