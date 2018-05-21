@@ -248,3 +248,23 @@
   坑点：
   - 循环引用
   - 一些类型不会拷贝：函数、正则表达式等，需要手动处理
+* HTML5 History控制
+  html5提供维护history的api。
+  
+  第一部分：js控制浏览器的“前进”、“后退” 
+  - window.history.back()
+  - window.history.forward()
+  - window.history.go()
+
+  第二部分：js修改浏览记录
+  - window.history.pushState :: 新增一条history记录
+  - window.history.replaceState :: 修改当前histor记录（有些浏览器出于安全考虑，依然会新增一条history记录）
+
+  第三部分：history变化的事件
+  - window.onpopstate :: pushState、replaceState不会触发这个事件
+    
+  我以前一直不知道如何用history api如何支持path的路由控制。现在算明白了。方式如下：
+  - window.onpopstate监听“前进”、“后退”的路由变化方式
+  - 自己封装函数，当调用pushState的时候，也调用一下路由变化的监听函数
+
+  
