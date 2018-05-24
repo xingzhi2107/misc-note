@@ -1,0 +1,29 @@
+#+TITLE: 后端杂项
+
+* 如何打好日志
+  看了很多篇关于如何打日志的博客，记录如下：
+** 日志分级
+** 哪些地方打日志？
+   - 与其它子系统打交道时
+   - 访问资源时
+   - try-cache
+   - 重要的状态变更处
+   - 重要的函数入口、出口
+   - 系统初始化
+   - 重要业务逻辑
+
+** 一条日志的组成部分
+   - 基础信息：如哪个系统、哪个用户、哪个请求、哪个线程等
+   - 描述: 发生了什么？
+   - 上下文：相关的重要上下文变量
+   - 如果是异常，带上track
+
+** 打日志的禁忌
+   - 到处乱打，不利于找日志，且影响性能
+   - 分级不对
+** 博客的连接
+   [[http://www.cnblogs.com/luguo3000/p/3543487.html]]
+   [[http://macrochen.iteye.com/blog/1399082]]
+   [[http://www.importnew.com/28024.html]]
+   [[http://www.infoq.com/cn/articles/why-and-how-log]]
+   [[http://tech.lede.com/2017/06/30/rd/server/loggingHabit/]]
