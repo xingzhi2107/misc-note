@@ -1,0 +1,118 @@
+#+TITLE: HTML
+
+* HTML标签分类
+  - 内容标签 ::
+    基本
+    - 标题 :: h1~h6。我感觉只要一个h1就够了，然后用class区分主副标题。
+    - 段落 :: p
+    - 链接 :: a
+    - 详情 :: details/summary
+    - 列表 :: ul、ol、li，以及dl(detail list)跟dd(detail detail)
+    - 时间 :: time
+    - 地址 :: address
+    - 插图 :: figure、img
+    - 表格 :: table、tbody、thead、th、tr、td、caption
+
+    高级
+    - 引用 :: blockquote、q、cite
+    - 缩写 :: abbr。<abbr title="HyperText Markup Language">HTML</abbr>
+    - 标记 :: em(Emphasis)、strong、mark、s
+    - 上下标 :: sub、sup
+    - 计算机 :: code、kbd、sample、pre、var
+  - 表单标签 :: form、input、textarea、keygen、select、option、fieldset、legend、optgroup
+  - 布局标签 :: div、span
+  - 网页结构标签 :: header、nav、aside、main、footer、article、section
+  - 多媒体标签 :: img、audio、map、figure、object...
+
+* Web设计流程
+  摘录自[[https://developer.mozilla.org/en-US/docs/Learn/HTML/Introduction_to_HTML/Document_and_website_structure#Planning_a_simple_website][Planning a simple website]]。 这里说的设计流程让我想起了[[https://responsivedesignworkflow.com][《RESPONSIVE DESIGN WORKFLOW》]]这本书的设计流程。
+
+  1. Bear in mind that you'll have a few _elements_ common to most pages. Note it.
+     思考你希望页面上有什么_元素_？然后记下来。
+  2. Draw a rough sketch of what you might want the _structure_ of each page to look like.
+     画一幅粗略的草图来来描述页面的_结构_。
+  3. Brainstore all the other _content_ (not common to every page) you want to have on your website.
+     头脑风暴所有你想要的_内容_
+  4. Try to _sort_ all these content items into _groups_.
+     排序、分组（分页面）
+  5. Try to sketch a rough sitemap.
+     画出整个网站的网站地图，标出路径。
+
+* HTML5新的特性
+  2018-05-13
+
+** 原生的input补全
+   datalist
+
+   #+BEGIN_SRC html
+    <input type="text" name="myFruit" id="myFruit" list="mySuggestion">
+    <datalist id="mySuggestion">
+      <option>Apple</option>
+      <option>Banana</option>
+      <option>Blackberry</option>
+      <option>Blueberry</option>
+      <option>Lemon</option>
+      <option>Lychee</option>
+      <option>Peach</option>
+      <option>Pear</option>
+    </datalist>
+   #+END_SRC
+
+** 原生的form validate
+   在样式方面：
+   之前表单元素有一些[[https://developer.mozilla.org/en-US/docs/HTML/HTML5/Constraint_validation][validation attributes]]，现在HTML5又支持了三个伪类用来样式化表单的validation，它们是：
+     - :valid
+     - :invalid
+     - :out-of-range
+     - :in-range
+
+   但是这里还有一个问题，那就是js如何获取这些表单元素的validate状态？可以通过api: checkValidity()来获取validate的状态
+
+   在自定义invalid message方面：
+   HTML5提供了一个js api：setCustomValidity(message)，用来自定义message
+   
+* 关于_ARIA_
+  以前一直不知道为什么大部分css框架示例里的html都会有一些“没用”的属性标签，如：role、area-selected、aria-hidden之类的属性是干嘛用的。现在才知道在，这些属性是用来提高访问性，辅助残疾人使用的。Accessible Rich Internet Applications -- [[https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA][ARIA]].
+
+* 关于 _for_ 属性
+  以前一直不知道_for_属性的真正用意，以为只是为了语义化的把一个label跟一个form的输入标签联系起来，其实它的作用不止于此。
+
+  它的确起到了语义化的工作，但是同时，它真的让一个label与一个输入标签（如，input）联系在了一起：
+
+  #+BEGIN_SRC html
+     <html>
+       <body>
+
+         <p>请点击文本标记之一，就可以触发相关控件：</p>
+
+         <form>
+           <label for="female">Male</label>
+           <input type="radio" name="sex" id="male" />
+           <br />
+           <label for="male">Female</label>
+           <input type="radio" name="sex" id="female" />
+         </form>
+
+       </body>
+     </html>
+
+  #+END_SRC
+
+  比如这段代码，当你点击Male的时候，它选中的是Famele；而当你点击Famele的时候，它选中的却是Male。当然，这是我故意这么做的。
+
+  它的作用是优化用户的点击体验，让用户点击label的时候，可以聚焦到对应的输入标签上。
+
+  当你使用嵌套式的label的时候，这种联系本身就已经隐式的存在了，不需要for属性：
+
+  #+BEGIN_SRC html
+     <label>
+       Male <input name="sex" type="radio"/>
+     </label>
+  #+END_SRC
+
+  但是当不是嵌套式的时候，就需要用这个for属性了:
+
+  #+BEGIN_SRC html
+     <label for="id">Male</label>
+     <input name="sex" type="radio" id="sex"/>
+  #+END_SRC
