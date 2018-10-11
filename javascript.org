@@ -132,11 +132,9 @@
     |----------+------------------+--------------------------------------------------+--------------------------------|
     - 获取当前对象的原型 :: Object.getPrototypeOf()
     - 设置当前对象的原型 :: Object.setPrototypeOf()
-    - 以一个对象为原型创建一个实例 :: Object.create(objAsProt)
+
   
   - constructor :: 构造函数
-  - constructor.prototype :: prototype属性
-  - 原型链 :: constructor.prototype.constructor.prototype
   - 什么是实例属性/方法？ :: ClassA.prototype上的属性或方法即实例属性或方法
   - 什么是静态属性/方法？ :: ClassA上的属性或方法即静态的
 
@@ -302,7 +300,43 @@
    目前还有两种比较有效的方式：
    1. 服务端渲染场景下，将一个token渲染到form的一个隐藏域中，提交的时候带上。这种请求无法被src或者跨域form表单伪造。
    2. 前端Ajax请求场景下，将token存放在Cookie（非HTTP Only）中，然后在发请求的时候取出放到body或者header中。这种目前也无法被伪造。
+* async与await是如何从generate演化而来的？
+  先举一个简单的例子，假设有一个数组：callbacks[cb1, cb2, cb3...cbn]，里面都是回调函数。每个回调函数自己又会执行一些异步操作，也就是说会注册这个异步操作的回调函数。碰巧，我们需要cb1的异步操作的回调是cb2、cb2的异步操作的回调是cb3，以此类推，我们应该如何把这些回调函数给链起来呢？
 
+  我们先来想想，这些函数的签名大概是怎样的。首先，它们自身是作为回调函数的，所以一般会有个参数才接受异步操作拿回来的结果，设为 *data* 。其次，它们会再执行异步操作，并且注册回调函数，一般而言回调函数需要从外界传入，这样更更灵活，所以还有一个参数用来承接回调函数，为了不跟上面的cb1、cb2混淆，我们设为 *nextCb*——下一个回调。那么cb1、cb2...cbn的函数签名大概就长这样：
+
+#+BEGIN_SRC javascript
+  function cb1(data, nextCb) {
+      // 做一些事情
+      // 异步操作，注册nextCb
+  }
+#+END_SRC
+
+  看到这里，你是不是想到改怎么做了？我们只需要把当前执行的结果作为第一个参数，把下一个回调函数作为第二个参数，传入cb即可，然后循环往复。就像这样：
+n = 7
+
+let head = cb1(cb2);
+
+  #+BEGIN_SRC javascript
+cb1(cb2(cb3(cb4)));
+  #+END_SRC
+
+#+BEGIN_SRC javascript
+  let data = null;                // 初始上层没有传参数过来
+  let callbacks = [cb1, cb2, cb3 ... cbn];
+  callbacks.reduce((prevCb, currCb) => {
+  cb1(data, )
+  });
+
+
+#+END_SRC
+* rxjs使用琐记
+** Cold的流与性能
+   Cold流的每一次订阅都会从头到尾走一遍整个流的周期，这样是不是很耗性能？
+** rxjs具有感染性
+   一旦使用了rxjs，那么所有的地方都需要使用rxjs。
+   vue的一个组件，prop是一个Observable，那么用到Observable的地方都需要使用Observable链起来。那么问题来了，如果我们已经很明确了，这个组件的生命周期里，props只会有一种组合值，也就是不会变，这时候还是需要使用流吗？
+   当然可以不需要，但是因为rxjs的感染性，我们不得不用。
 * Web重绘与重排
 ** 概念
    布局的变更会引起重排，即重新排列；颜色、线框等变更（不涉及大小变化）会引起重绘。当然，重排本身就包含了重绘。
