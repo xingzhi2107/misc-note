@@ -1,0 +1,72 @@
+#+TITLE: CSS 学习笔记
+
+* 前言
+  个人的CSS水平实在太烂了，我决定重新梳理一遍css的知识，同时进行 =daily css production= 。梳理知识的目的在于找到更好的 =知识树= ，而实践的目的在于css技能的 =保持活性= 。
+
+* Element Selector
+** 官方的Attribute Selector的分类
+   我觉得[[https://developer.mozilla.org/en-US/docs/Learn/CSS/Introduction_to_CSS/Attribute_selectors][MDN]]/[[https://www.w3.org/TR/selectors-3/#attribute-selectors][Selector-3]]对 =Attribute Selector= 分类很合理 大致可以分层两类：
+
+   1. Attribute presence and value selector - 切确字符类
+
+   2. Substring matching attribute selectors - 字符子串匹配类
+
+   第一种用来匹配切确的字符（属性），而第二类有点像正则表达式（但又不是）用来匹配子串。
+
+*** Attribute presence and value selector
+    这个分类的属性选择器有：
+
+    - [att] :: =存在= att这个属性的元素
+    - [att=val] :: 存在att这个属性，并且值 =为= val的元素
+    - [att~=val] :: 存在att这个属性，并且值是由空白字符分割开的一串单词， =其中一个= 单词是val的元素
+
+*** Substring matching attribute selector
+    - [att^=val] :: 存在att这个属性，并且值是以val =开头= 的元素，这很RegExp
+    - [att$=val] :: 存在att这个属性，并且值是以val =结尾= 的元素，这很RegExp
+    - [att*=val] :: 存在att这个属性，并且值 =存在子串是val= 的元素，这也还算比较RegExp
+
+** 我的Attribute Selector分类
+   在记录上面的“官方”分类的时候，我故意遗漏了 =[att|=val]= 属性选择器，这是因为我对官方的分类方式不是很赞同。
+
+*** 特殊的[att|=val] selector
+    先说说其定义：存在att这个属性，并且值是以val开头 =或以val-= 开头的元素，这不是那么RegExp。初看很容易让人以为这个选择器跟 =[att^=val]= 没有什么区别，但令人猝不及防的是，它夹带了私货—— =“或以val-”开头= ，这样一条额外的定义。
+    W3的[[https://www.w3.org/TR/selectors-3/#attribute-selectors][Selector Level 3]]文档将其划分为第一类，Attribute presence and value selector。而MDN的[[https://developer.mozilla.org/en-US/docs/Learn/CSS/Introduction_to_CSS/Attribute_selectors][Attribute Selector]]文档则将其划分为第二类，Substring matching attribute selector。说到底还是这个选择器太让人迷惑了，为什么有了 =[att^=val]= 还需要一个 =[att|=val]= ？
+    简单的说，我个人认为属性选择器需要第三个分类：特殊属性选择器。它们因为特殊的目的、特殊的使用场景而存在。同时，我个人认为， =[att|=val]= 跟 =[att~=val]= 这两个选择器都应该分属此类。
+    从官方的定义，我们很容易知道这个属性选择器其实是为了匹配语言用的，比如我们希望语言是中文的时候应用某些特殊的css。但是中文的code有几种？从这份[[http://www.lingoes.cn/zh/translator/langcode.htm][语言代码表]]中可以看出有6种。那么如果没有 =[att|=val]= 这个选择器，我们需要这么写：
+
+    #+BEGIN_SRC css
+
+      [lang="zh"], [lang^="zh-"] {
+          /* ba la ba la */
+      }
+
+    #+END_SRC
+
+    个人推测估计组委会的人觉得，这样太麻烦太ugly了，于是创造了 =[att|=val]= 这种“语法糖”来“fix”这种繁琐的操作。然而，这种少几个字符的改进，却给我们带来了认知困惑，真是得不偿失！个人认为，还不如单独为语言选择创造一种选择器好了，把这种特殊“具名化”，让人一眼就知道其目的性，反倒不容易跟那些“原子性”的属性选择器混淆。 =:lang()= 这个伪类选择器貌似是用来弥补这种认知bug的，但是要小心它们之间是不一样的，详见[[https://www.w3.org/TR/selectors-3/#lang-pseudo][:lang伪类]]。
+
+    个人再作进一步推测，为什么 =[att|=val]= 这个选择器的标识符是竖线"|"。我估计，这是因为正则表达式里，“或” 是用 "|" 表示的。希望对记忆这个选择器的“样子”有帮助。
+
+*** 对[att~=val]存在目的的推测
+    =[att|=val]= 的目的是匹配lang属性，那么 =[att~=val]= 的目的又是什么呢？它真的跟 =[att*=val]= 很像啊！不是吗？为什么它也被划分在第一类属性选择器里？
+    说真的，我没有什么头绪。唯一能想到的，就是匹配class。我们可以用 =[att~=val]= 来模拟类选择器，大致如下：
+
+    #+BEGIN_SRC css
+
+      [class~="btn"] {
+          /* 定义 */
+      }
+
+      .btn {
+          /* 定义 */
+      }
+    #+END_SRC
+
+    但是已经有了类选择器来，再造出这样一个选择器来略显多余。唯一的可能就是确实存在类似class属性的过滤需求，但是其属性名又不是class。当然，我目前没有想到。
+*** 最终结果
+    所以，我对属性选择器的最终分类为：
+
+    1. 非类RegExp属性选择器 :: [att] [att=val]
+    2. 类RegExp属性选择器 :: [att^=val] [att$=val] [att*=val]
+    3. 特殊目的属性选择器 :: 语言属性选择器 [att|=val]，类名属性选择器 [att~=val]
+
+    这样，我们就不用去纠结 =[att|=val]= 与 =[att^=val]= 的区别，以及 =[att~=val]= 与 =[att*=val]= 的区别了
