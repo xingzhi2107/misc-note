@@ -70,3 +70,148 @@
     3. 特殊目的属性选择器 :: 语言属性选择器 [att|=val]，类名属性选择器 [att~=val]
 
     这样，我们就不用去纠结 =[att|=val]= 与 =[att^=val]= 的区别，以及 =[att~=val]= 与 =[att*=val]= 的区别了
+** Pseudo-class and pseudo-element
+   Pseudo-class以及pseudo-element与其它选择器有什么区别？我的理解是，pseudo-selector提供的能力，更像是原本只能由js来实现，而现在css进行了“原生实现”。它们讨论的，更多的是关于“状态”，而不是元素本身的DOM Tree结构。我有一种感觉，也许是错觉，那就是CSS3在选择器方面的“能力”扩展，基本都是在preudo-selector这个类别里扩展的。
+   去讨论pseudo-class与pseudo-element的区别貌似没有什么意义（尤其是::selection也归类为pseudo-element之后），而且也不是重点。我觉得pseudo-class与pseudo-element的重点在于 =了解= 各个选择器的定义作用， =归类分组= 各个选择器以帮助记忆。我觉得，这个方面[[https://www.w3.org/TR/selectors-3/#pseudo-classes][《Selector Level 3》]]已经做得很好了！这里，无需再搬运过来。
+   如果有什么值得记录，那应该就是还有一些零碎的容易混淆的点，可能需要特别去理清楚。这里就着重讨论这些吧！
+
+*** :nth-child() vs :nth-of-type()
+    =:nth-child()= 应该是很好理解的，就是“第几个子元素”的意思。然而，实际上并非那么简单！到底是哪些元素中的 =Tn+X= 个呢？我们之间上结果：
+
+    - SelectorA:nth-child(Tn+X) :: 是从SelectorA所选中的元素所在的 =那一层的所有元素= 的Tn+X，同层计算。
+    - SelectorA:nth-of-type(Tn+X) :: 是从SelectorA所选中的元素中的Tn+X，同层计算。
+
+    同层计算是什么意思呢？先看代码：
+
+    #+BEGIN_SRC web
+      <style>
+       .list>.list-item {
+           background-color: red;
+       }
+      </style>
+
+      <ul class="list" id="l1">
+          <li class="list-item">abc</li>
+          <li class="list-item">hehe</li>
+          <li class="list-item">haha</li>
+          <li class="list-item">keke</li>
+          <hr class="list-dividline"/>
+          <li class="list-item">lele</li>
+      </ul>
+
+
+      <ul class="list" id="l2">
+          <li class="list-item">abc</li>
+          <li class="list-item">hehe</li>
+          <li class="list-item">haha</li>
+          <li class="list-item">keke</li>
+          <hr class="list-dividline"/>
+          <li class="list-item">lele</li>
+      </ul>
+    #+END_SRC
+
+    对于上述代码， ~.list>.list-item {}~ 匹配的是什么？是.list下的直接子元素.list-item。 ~#l1~ 下的 ~.list-item~ 为同一层，而 ~#l2~ 下的 ~.list-item~ 为另一层。每个层自己计算Tn+X，就是同层计算。
+    你可以给选择器加上nth-child或者nth-of-type的伪类修饰，来看看会有什么结果。我以前以为，只要看看两个不同的结果就很好记忆它们之间的区别了！然而，时间一长就又会忘记。css这样“死记硬背”的东西，实在让人抓狂。于是，我想到了一种转换记忆的方式。那就是用代码来记忆二者的区别。
+    假设我们要实现浏览器的渲染引擎，让你来实现 =:nth-child()= 跟 =:nth-of-type()= 的逻辑，应该如何实现呢？我们这里不考虑上面所说的“层”的问题，假定一个选择器只会有一个层匹配。那么设，选择器原本匹配到的元素叫 ~candidateElemetns~，加上 =nth-child或nth-of-type= 修饰后匹配到的元素叫做 ~targetElements~，看如下js伪代码：
+
+    #+BEGIN_SRC javascript
+
+      /**
+       ,* 获取某个原始选择器选中的元素
+       ,*
+       ,* @selector 原始选择器，指没有带伪类的选择器，如上文的'.list > .list-item'
+       ,* @return 符合选择器的元素，这里假设都在同一层
+       ,*/
+      function getCandidateElements(selector) {
+          // ...
+      }
+
+      /**
+       ,* 根据周期规则，获取匹配到的元素的函数 
+       ,*
+       ,* @elements 元素数组
+       ,* @rule 规则，如'2n+1', 或'2n+0' 这样
+       ,* @return 符合规则的元素
+       ,*/
+      function getRoundMatchElements(elements, rule) {
+          // ...
+      }
+
+      /**
+       ,*  获取原始选择器:nth-of-type(rule)的元素
+       ,*
+       ,* @selector 原始选择器，指没有带伪类的选择器，如上文的'.list > .list-item'
+       ,* @rule nth-of-type的规则，如'2n + 1'
+       ,* @return 符合规则的元素
+       ,*/
+      function getNthOfTypeElements(selector, rule) {
+          // 获取原始选择器匹配到的元素
+          const candidateElements = getCandidateElements(selector);
+
+          // 直接拿原始选择器匹配到的元素去作Tn+X的规则匹配
+          const targetElements = getRoundMatchElements(candidateElements, rule);
+
+          return targetElements;
+      }
+
+
+      /**
+       ,*  获取原始选择器:nth-child(rule)的元素
+       ,*
+       ,* @selector 原始选择器，指没有带伪类的选择器，如上文的'.list > .list-item'
+       ,* @rule nth-child的规则，如'2n + 1'
+       ,* @return 符合规则的元素
+       ,*/
+      function getNthChildElements(selector, rule) {
+          // 获取原始选择器匹配到的元素
+          const candidateElements = getCandidateElements(selector);
+          const candidateElementsSet = new Set(candidateElements); // 转换为set，备用
+
+          // 获取candidateElemtn元素所在层的“所有”元素，包含自己
+          const sidbingsElements = getSidbingsElements(candidateElements[0]);
+          // 用那一层的“所有元素”，去作Tn+X的规则匹配，获取到匹配中的元素
+          // 这是nth-child与nth-of-type的区别所在！匹配规则的范围不一样
+          const matchRoundRuleElements = getRoundMatchElements(sidbingsElements, rule);
+
+          // 最后，再从匹配到的元素中过滤出candidateElement，其结果就是targetElements
+          const targetElements = matchRoundRuleElements.filter((element) => {
+              return candidateElementsSet.has(element);
+          });
+
+          return targetElements;
+      }
+    #+END_SRC
+
+    看完代码之后你会发现，其实 =nth-of-type= 是简单的，而 =nth-child= 的规则反而是复杂的。它们的共同点在于，匹配出来的元素都必须是原始selector选中的元素。不同点在于： =nth-of-type= 直接以原始selector选中的元素进行Tn+X的规则匹配，而 =nth-child= 则比较麻烦，它用的是元素所在层的所有元素进行规则匹配的。
+
+*** Tn+X 的规则描述
+    =:nth-child(Tn+X)= 的规则的描述能力还是算强大的。但是其规则是怎样的呢？W3c用了编程语法的方式描述出来，实在有点看不懂。我们将其描述为数学语言，可能会好一些。设，公式为： ~N(n)=Tn + X~，其中：
+    1. N(n) 为公式的计算结果，表示表示第几个，为整数，且N(n) > 0
+    2. T 重复周期，必须为整数（所以，可以为负数）；
+    3. X 为起始偏移量，必须为整数，对结果N(n)有影响
+    4. n必须为自然数，即 0, 1, 2, 3...
+    满足上述条件的所有n的N(n)，即为要选择的元素。
+
+    我们来解读几个：
+
+    - xx:nth-child(7) :: T = 0, X = 7, n的可取值为整个自然数集，但是N(n)的结果集为 {7}，所以nth-child(7)就表示xx的第7个元素
+    - xx:nth-child(2n + 1) :: T = 2, X = 1, n的可取值为整个自然数集，N(n)的结果集为 {1, 3, 5 ... 7}，也就是“奇自然数”，所以nth-child(2n + 1)就表示...
+    - xx:nth-child(2n + 3) :: T = 2, X = 3，n的可取值为整个自然数集，N(n)的结果集为 {3, 5, ...7 }，也就是3以后包括3的“奇自然数”，所以nth-child...
+    - xx:nth-child(-n + 3) :: T = -1, X = 3, n的可取值为{0, 1, 2}, N(n)的结果集为 {1, 2, 3}，所以nth-child:(-n + 3)....
+    - xx:nth-child(n + 15) :: T = 1, X = 15, n的可取值为曾哥自然数集，N(n)的结果为 {15, 16, 17....}，所以nth-child
+    - xx:nth-child(n + 3):nth-child(-n + 15) :: N(n)的结果集是 {3, 4, 5, 6...13, 14, 15}，为什么？下文解答
+
+    对于最后一个选择器，如果分成 =xx:nth-child(n + 3)= 与=xx:nth-child(-n + 15)= 应该都是很容易解读。但是，合在一起之后呢？这样，我们现介绍一下css选择器的组合规则：
+
+    1. css选择器在组合的时候，选择器之间“相连”表示“并且”，如 =.list-item.active= 表示有.list-item同时也有.active class的元素
+    2. “单纯只有空格”表示“后代组合”，如 ~.list .list-item~ 表示祖代（可能是父元素，也可能是父元素的父元素）是.list的.list-item
+    3. 用“>”连接，表示“之间子代”，如~.list > .list-item~，略
+
+    所以，=xx:nth-child(n+3):nth-child(-n+15)= 表示的是并集。
+
+    最后，再回过头来看Tn+X的规则，不知道是否有清晰一些？我觉得，即便记不住也没事，这种东西翻翻文档就很容易查到。最关键的是，要知道Tn+X的表示什么？它不是只能表示周期序列，它也能给这个周期序列加上范围限定。
+
+*** :lang(zh) vs [lang="zh"]
+    简单的说，~:lang(zh)~ 是当元素处于"zh"语系的时候会应用对应的css。特别注意：这时候此元素未必需要有[lang="zh"]这个属性。也就是说，如果只有body定义了lang属性，即 ~<body lang="zh">~ ，那么body下的所有元素都满足 ~:lang(zh)~ 下的规则。而 ~[lang="zh"]~ ，则只能匹配到 ~body~ 这个元素。
+
+
