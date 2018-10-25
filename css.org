@@ -279,6 +279,8 @@
 *** 依然存在的问题
     上面的Cascading order其实不完备，它没有讲到内联式、行内式、引用式三种css之间的优先级关系，到底哪一种写法的优先级更高？我记得CSS2.1是有讲到的，一时找不到了，当时的笔记也不见了。不过，真要用到的时候，实验一下就能知道了。现在知不知道也无所谓了，等哪天看到了相关的说明再说吧！
 
+
+* CSS Values
 ** CSS Length Unit
    CSS的长度单位。这个问题原本只有只有两个重点：1）有哪些长度单位？2）长度单位的继承问题。但是，看到这个单元的时候，我脑袋里闪过了“Retina显示屏模糊”的问题，我很想把这个问题给侬清楚，它貌似跟CSS的“px”很有关系。
 
@@ -329,3 +331,27 @@
     因为自己从未遇到过这个问题，所以我一开始完全摸不着头脑。到底是什么模糊了？字体？border？还是什么？看了一堆文章，一上来就讲“像素密度”什么的，也没说明到底遇到什么问题。直到我看了MDN的这篇文档——[[rmail:https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio][Window.devicePixelRatio]]，才明白问题是什么。噢～ 原来是“位图模糊”问题，而不是什么“border模糊”之类的。是“位图”，“位图”！
     在Retina显示屏出现之前，大部分显示器的1个物理像素与css的1px是相对应的，但是由于Retina显示屏提高了“像素密度”，css的1px对应的却是4个物理像素点。一张位图，最好的效果是，一个“位图像素点”对应一个“物理像素点”来渲染。如果一张图片是200 * 300个像素点，传统情况下，css的设定当然也是200px * 300px了。但是到了Retina屏下，如果依然这样设定，那么其结果是，1个“位图像素点”由4个“物理像素点”来渲染，这样就好像把图片放大了，“颗粒感”也随之出现，也就模糊了。
     解决方案当然是在Retina屏下使用“二倍图”啦。但是这里面涉及到一个图片多版本问题、网络加载问题、开发效率问题、兼容性问题、工程化问题，不是那么简单的。不过这里就不展开讨论了。详见这篇博客——[[https://www.w3cplus.com/css/towards-retina-web.html][走向视网膜（Retina）的Web时代]]，写得不错。
+
+** Specified, computed, used and actual values
+   有时候，实在不明白一个css属性为什么要有这么多种“value”。这或许反应了需求的多样性，以及css的复杂性。
+
+   简单来讲，浏览器一开始只需要3种value，我们按它的渲染过程，来逐一讲解。
+
+   1. 渲染的初始阶段，给每个元素的每个css属性一个“Specified Values”，即 =指定值=。算法如下：
+      1) 如果定义了css，则采用对应的css值作为Specified Values。
+      2) 如果没有定义css并且对应属性是默认继承的，或者定义的css的值就是"inherit"且当前元素存在父元素，则以父元素的Computed Value为本元素的Specified Value。当然，这时候本元素的Computed Value也就等于Specified Value。
+      3) 如果即没有定义css，对应属性也不是默认继承的，或者虽然是默认继承的，但是没有父元素（如html），则使用对应属性的“initial value”作为Specified Value。
+   2. 确定好Specified Value之后 =正式渲染= 之前，还需要通过Specified Value换算出Computed Value，即 =计算值=。有些值是不利于渲染的，如相对长度单位“em”等。提前将其换算成绝对长度单位“px”，免得渲染时再去做计算，这样可以提高渲染效率。这就是Computed Value的意义所在。另外，属性的继承是按Computed Value作继承的。我想，这同样也是为了提高效率吧！免得逐层作运算。
+   3. 最后，来到渲染时，这时候得到的value，就是Used Value，即 =应用值=。为什么要有Used Value？因为Computed Value毕竟是渲染前的值，有些东西是要到渲染的时候才能确认的。比如，有个元素的width: 50%，那么父元素的宽度不知道的时候（因为父元素的宽度可能也是依赖它的父亲元素的，如此逐层往依赖），就计算不出它的宽度。这时候，就非得进行渲染不可！我们需要知道viewport的宽度，然后知道"root"元素的宽度，然后逐层往下渲染。类似的case还有很多，详见[[https://developer.mozilla.org/zh-CN/docs/Web/CSS/used_value][MDN-CSS应用值]]。
+
+   这原本是一个很“美满”的结局。但是，现实世界还真的是复杂的。比如这样一条css： =border: 0.5px solid;=，请问它的 =border-width= 的3 value分别是多少？很显然，3个value都是 =0.5px=。但是实际渲染情况呢？却未必能如愿渲染。Safari在Retina显示屏下能绘制出0.5px宽度的border，而Chrome则会绘制出1px宽度的border。这是“表里不一”啊！css2.1给出了一个新的“value”定义，叫 =actual value=，也就是 =实际值=。 我觉得，这个目前就了解下就好了。因为目前也没有获取Actual Value的js接口，反倒Computed Value可以通过 ~window.getComputedStyle~ 这个接口获取。
+
+** CSS Inheritance
+   CSS的继承，这里重新梳理一遍要点：
+   1. 继承自父元素的Computed Value；
+   2. 有些CSS的属性是默认继承自父元素的，另外可以使用'inherit'这个值来强制继承；
+   3. 如果元素是根元素，那么“继承”对它来说，会变成使用"initial value"；
+
+   继承采用的是“Computed Value”，会造成一些坑，这里就不再啰嗦了。前面讲过"text-indent: 3em"的例子了。
+
+   其实，这里我最新讨论的是，到底该不该记哪些属性是默认继承的？哪些不是？我在重新学习之前，好像感觉记一下很重要。但是现在想想，却觉得去记哪个会继承哪个不会是很愚蠢的。先不记吧！哪天可能会发现其中的规律。
