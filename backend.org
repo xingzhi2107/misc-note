@@ -27,3 +27,9 @@
    [[http://www.importnew.com/28024.html]]
    [[http://www.infoq.com/cn/articles/why-and-how-log]]
    [[http://tech.lede.com/2017/06/30/rd/server/loggingHabit/]]
+
+* nginx proxy header
+  nginx proxy会不会默认转发所有header我不知道。但是，它一定不会转发带有下划线的header。
+  我今天就被这个坑到了，谁会想到“下划线”不是合法的header名字？老天爷～ 然后原本好好的，上了nginx转发之后，就挂了。
+
+  在fix这个问题的时候，我看到，自己实现这个逻辑的时候，auth token的header name竟然还支持配置。当时真的是多此一举。而且还半途而废，因为后端可以配置了，而前端却没有跟着配置走，是hardcode的。估计当时写前端的时候，也觉得自己脑子瓦特了，所以就半途而废了。
