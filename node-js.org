@@ -11,3 +11,7 @@ To start debugging, open the following URL in Chrome:
   #+end_src
 
 第二步，在Chrome浏览器里打开运行命令后产生的 =chrome-debtools://...= 链接。或者安装Chrome的 =NIM= 插件。
+
+* npm的坑
+  今年项目要上线，结果却遇到sanbox能打包，但是live环境却打包失败。 那个yarn.lock文件貌似失效了一般，里面的依赖根本没有装全。
+  最后，我们的运维大佬发现,live上的yarn是全局安装的，它装的包最后会找不到。总是，用npm再装一个yarn，把全局的yarn覆盖了就好。
