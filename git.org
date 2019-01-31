@@ -84,3 +84,12 @@
    
    但是rebase是一种破坏性操作，即你会破坏别人的=base=。所以为了保证“原子性”，实际的操作过程比较多。详见：[[https://randyfay.com/content/rebase-workflow-git][rebase-workflow]].
 
+* tag
+** 如何push tag？
+   最近在造轮子——“Simple CI”，可以通过Github的WebHook来触发deploy。我希望push一个tag的时候，才进行deploy。
+
+   然后搞了非常久，不知道为什么，"Tag Event"一直都不触发。
+
+   今天才知道，原来我一直没有push tag到服务器，当然不触发了。真是崩溃！！！！！
+
+   =git push= 是不会顺带push tag的，一定要这样： =git push origin tag_name= 才会push tag！！！！

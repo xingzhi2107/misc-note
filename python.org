@@ -1,0 +1,5 @@
+#+TITLE: python
+
+* subprocess.call无法运行“cd”
+  https://stackoverflow.com/questions/21406887/subprocess-changing-directory
+
