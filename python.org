@@ -3,3 +3,24 @@
 * subprocess.call无法运行“cd”
   https://stackoverflow.com/questions/21406887/subprocess-changing-directory
 
+* python执行shell命令
+  虽说最方便的是 =os.system= ，但是它却不好控制stdin, stdout, stderror。所以python官方给出了 =subprocess= 模块。
+  subprocess也有分好几个命令。但是，一般 =subprocess.run= 就能处理大部分情况。
+
+  下面给个简单的example:
+
+  #+BEGIN_SRC python
+    import subprocess
+
+    result = subprocess.run(
+        "git tag --list",           # 命令
+        shell=True,                 # 执行shell
+        capture_output=True,        # 捕获输出，这样在result里获得stdout, stderror。否则，默认直接输出在屏幕中
+        encoding='utf8'             # output编码，否则默认是二进制
+        )
+
+    result.stdout                   # str
+    result.stderror                 # str
+    result.resultcode               # int
+  #+END_SRC
+
