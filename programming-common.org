@@ -1,0 +1,4 @@
+#+TITLE: Programming Common
+
+* about unit test
+  这周给自己安排了写单元测试的任务，也写了几个。但是，翻了半途主代码，却不知道要测试什么了，貌似没有多少东西值的去测试。翻了一下Google，看到这篇[[https://coolshell.cn/articles/8209.html][“单元测试要做多细？”]]。感慨良多，我想起自己刚学习TDD的时候，一直想100%的覆盖单元测试。
