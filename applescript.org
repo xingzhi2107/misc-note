@@ -1,0 +1,19 @@
+#+TITLE: Apple Script
+
+
+* how to edit a exist Automator service ?
+  =Automator= service store at =~/Library/Services=
+
+* how to press keyboard by applescript ?
+  #+NAME: press "Ctrl+Cmd + h"
+  #+BEGIN_SRC AppleScript
+tell application "System Events"
+	keystroke "h" using {command down, control down}
+end tell
+  #+END_SRC
+
+* how to get current select text ?
+  use =Automator=.
+
+  1. create a Automator service with text input
+  2. run AppleScript in the service, and the input is the selected text.
