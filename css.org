@@ -384,7 +384,7 @@
 
   “超出的文本变成省略号”，是很常见的UI需求。怎么做呢？
   1. 首先，你要让文本“超出(overflow)”
-  2. 其次，设置=text-overflow: ellipsis=
+  2. 其次，设置=text-overflow: ellipsis=, =overflow: hidden=
   
   第一点不是那么容易做到。你需要有如下两个条件：
   1. 首先，你的容器要有一个 =“宽度”= ，否则就很难“超出”；
@@ -393,7 +393,7 @@
   所以合起来就是三步走：
   1. 首先，检查容器是不是有一个宽度，或者最大宽度
   2. 其次，让文本不换行 —— =white-space: nowrap=
-  3. 最后，设置=text-overflow: ellipsis=
+  3. 最后，设置=text-overflow: ellipsis=, =overflow: hidden=
 
 
   对=white-space=的疑问
