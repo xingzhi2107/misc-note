@@ -483,6 +483,9 @@
 由=animation-timing-function=控制的。可以试试把一个动画的=animation-timing-function=赋值为=cubic-bezier(0.59,-0.35, 0.23, 1.15)=，你会发现，这个动画播放的时候“回光反照”了。
 
   那为什么会有这种需求呢？直觉上，我觉得还是挺正常的吧，增加你对动画的控制能力。至于更深层次的原因，我也没什么思路。
+* offsetTop与offsetParent
+  =$el.offsetTop=并一定不是元素的顶部到body顶部的距离，而是到=$el.offsertParent=的距离。所谓=$el.offsetParent=也就是最近的一个相对定位的容器元素。
 
+  所以，如果你要获取一个元素顶部到body顶部的距离，那就需要通过=offsetParent=一层一层递归下去，把每一层的=offsetTop=也累加起来才行。
 
-  
+  这里有个点要注意：offsetTop是不会以=transform=之后的位置为准的，所以如果你发现得到的=offsetTop=不“准确”，那你要看看元素是不是被=transform=了。
