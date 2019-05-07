@@ -1,0 +1,6 @@
+#+TITLE: Mysql
+
+
+* change primary key
+  1. =ALTER TABLE tbl DROP PRIMARY KEY=
+  2. =ALTER TABLE tbl MODIFY fid ... PRIMARY KEY=
