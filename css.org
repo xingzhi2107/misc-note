@@ -583,3 +583,18 @@
   所以，如果你要获取一个元素顶部到body顶部的距离，那就需要通过=offsetParent=一层一层递归下去，把每一层的=offsetTop=也累加起来才行。
 
   这里有个点要注意：offsetTop是不会以=transform=之后的位置为准的，所以如果你发现得到的=offsetTop=不“准确”，那你要看看元素是不是被=transform=了。
+* 字体对齐问题 -- how to compute inline element height
+  今天遇到一个字体对齐问题，使我对=height=有一个更深入的认识。
+  先前就已经知道，block element的height如果是auto的时候，其computed height的计算方式是：max(computed line-height of inner inline element)。现在公司使用的字体是ProximaNova，它渲染出来的inline element的height刚刚好就是赋予的font-size。这使我有2个错误的认识：
+  1. 我以为所有的inline element的height就应该等于font-size
+  2. 在处理一些字对齐的问题的时候，经常使用line-height=1，然后height与computed line-height刚好相等，这让我以为inline element height与line-heigth就是同一个东西
+
+  先描述一下今天做的题目，写一个天气预报的界面（[[file:attachments/compute-inline-element-height.webarchive][web archive]]），我在处理底部的“温度”与“风向”、“湿度”的对齐问题的时候陷入了困境。温度的font-size为45px，然后“风向”的顶部要与“温度”的顶部对齐，“风向”的底部要与“湿度”的底部对齐。我一开始以为用个grid布局（如我css所写），并且所有line-height都设置为1，然后“风向”与“湿度”各自的align-self分别为start跟end就能很完美的解决这个问题了。
+
+  结果让我大跌眼镜。非常的不对齐，我给温度里面的文本包个span，从dev tools看到它的高度竟然是61px（使用'Open Sans'字体时）。由于之前经验的误导，我一时陷入了迷茫，我以为是自己乱秀grid布局导致的问题。然后，我脱离grid布局，写了个span，发现高度还是61px。最后，Google了一下，才发现之前的认识是错误的。
+
+  首先，=height of inline element= 与=inline-height of inline elment=是完全不一样的概念！虽然，那个span的height是61px，但是它的computed inline-height依然是45px * 1，所以包裹它的div的高度也是45px。
+
+  其次，=height of inline element=并不一定会等于font-size，css2.2里有说，见[[https://www.w3.org/TR/CSS22/visudet.html#inline-non-replaced][文档]]。它根本不受css标准控制，不同的字体会渲染出不同的结果。我在那个web archive文件里上面写了好几个font-size为45px的span，每个span字体不同，它们的height也完全不一样，有的61px，有的51px，有的刚好等于45px。
+
+  最后，=height of inline element=非常大概率下是不等于实际渲染出来的字的高度。所以，如果两列字的font-size差很大，你还想让它们水平对齐，那只能比较hack的的方式去微调了，比如用margin或者绝对定位，[[file:attachments/hack-adjust-vertical-align.png][如图]]。
