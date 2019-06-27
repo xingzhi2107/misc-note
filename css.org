@@ -450,7 +450,7 @@
        1) 排列。Inline元素在同一行从左往右，一个接一个的排列，直到排不下换行。一个行内元素也可能独自占用多行。
        2) 行高。Inline元素的行高，基本取决于自身的line-height属性，但是对于设置height有效的元素（一般是replaced element），则其line-height属性无效，它的真实“line-height”就是“元素本身的高度”！
 
-* Font
+* Font styling and text styling
 ** @font-face 之 font-display
   主要感悟来源以下两篇文章:
   - [[https://css-tricks.com/almanac/properties/f/font-display/][font-display | CSS-Tricks]]
@@ -469,8 +469,28 @@
   我们该使用什么策略？其实决定权往往不再开发者，或者用户手里，决定权在“网络质量”手里。如果网络条件很好，用“先留白”；如果网络条件很差，用“先渲染”。为此，=font-display=才有了=fallback=跟=optional=这两个值，它们代表“先留白”跟“先渲染”两种策略的“混合策略”。也就是，先采用很短的“先留白”策略，一般是100ms，如果网速很好100ms也够下载字体了；如果100ms还没下载完字体，那么立即采用使用备用字体渲染文本，直到字体加载完毕。
 
   没有完美的策略。其实，不管哪一种方案都很难避免“闪烁”的发生。因为网络不是简单的只有“很好”跟“很坏”之间，100ms的时候还没加载完毕，但是110ms的时候就加载完毕了，这时候就要在10ms内经历“空白”->“备用字体渲染”->“期望字体渲染”的多重闪烁，哈哈哈～
-  
-* font-display与loading组件的相互借鉴。
+** @font-face的font-weight、font-style
+   一套字体一般会有好几个“形态”：不同的font-weight与font-style。在定义@font-face的时候，只需要把font file对应的font-weight、font-style等定义好，浏览器就能根据element的font-weigth、font-style跟找到对应的font fil。而font-family只需要统一写字体名就好，不同带上regular、light、italic之类的后缀。
+** font-weight
+   font-weight虽然有9个level，[100 - 900]，但很少有字体9个level都支持。其中，值得注意的地方有两点：
+   1. keyword值的mapping：normal=400, bold=700
+   2. border/lighter 比继承的font-weight粗或者细，这里不会跟着9个level走，详见[[https://www.w3.org/TR/css-fonts-3/#font-weight-prop][css-fonts-3 3.2]]。
+** 字体对齐问题 -- how to compute inline element height
+  今天遇到一个字体对齐问题，使我对=height=有一个更深入的认识。
+  先前就已经知道，block element的height如果是auto的时候，其computed height的计算方式是：max(computed line-height of inner inline element)。现在公司使用的字体是ProximaNova，它渲染出来的inline element的height刚刚好就是赋予的font-size。这使我有2个错误的认识：
+  1. 我以为所有的inline element的height就应该等于font-size
+  2. 在处理一些字对齐的问题的时候，经常使用line-height=1，然后height与computed line-height刚好相等，这让我以为inline element height与line-heigth就是同一个东西
+
+  先描述一下今天做的题目，写一个天气预报的界面（[[file:attachments/compute-inline-element-height.webarchive][web archive]]），我在处理底部的“温度”与“风向”、“湿度”的对齐问题的时候陷入了困境。温度的font-size为45px，然后“风向”的顶部要与“温度”的顶部对齐，“风向”的底部要与“湿度”的底部对齐。我一开始以为用个grid布局（如我css所写），并且所有line-height都设置为1，然后“风向”与“湿度”各自的align-self分别为start跟end就能很完美的解决这个问题了。
+
+  结果让我大跌眼镜。非常的不对齐，我给温度里面的文本包个span，从dev tools看到它的高度竟然是61px（使用'Open Sans'字体时）。由于之前经验的误导，我一时陷入了迷茫，我以为是自己乱秀grid布局导致的问题。然后，我脱离grid布局，写了个span，发现高度还是61px。最后，Google了一下，才发现之前的认识是错误的。
+
+  首先，=height of inline element= 与=inline-height of inline elment=是完全不一样的概念！虽然，那个span的height是61px，但是它的computed inline-height依然是45px * 1，所以包裹它的div的高度也是45px。
+
+  其次，=height of inline element=并不一定会等于font-size，css2.2里有说，见[[https://www.w3.org/TR/CSS22/visudet.html#inline-non-replaced][文档]]。它根本不受css标准控制，不同的字体会渲染出不同的结果。我在那个web archive文件里上面写了好几个font-size为45px的span，每个span字体不同，它们的height也完全不一样，有的61px，有的51px，有的刚好等于45px。
+
+  最后，=height of inline element=非常大概率下是不等于实际渲染出来的字的高度。所以，如果两列字的font-size差很大，你还想让它们水平对齐，那只能比较hack的的方式去微调了，比如用margin或者绝对定位，[[file:attachments/hack-adjust-vertical-align.png][如图]]。
+** font-display与loading组件的相互借鉴。
   在使用Loading效果的时候，遇到一些问题，今天重读font-display的时候发现两者有可以相互借鉴的地方。
 
   先说Loading的问题。当组件正在加载数据的时候，我们希望组件显示一个loading效果，等数据加载完成后，再去掉loading效果。这会有这样的问题：当数据加载非常快的时候，从loading -> 取消loading的过程会非常的快，这时候会组件闪烁一下，很影响体验。
@@ -486,9 +506,8 @@
 
   反过来，loading的过渡动画也可以借鉴给font-display。font-display虽然有机制可以大概率避开字体变化时产生的闪的问题，但是却无法避免。如果新字体加载到之后，那么也使用过渡动画切换字体，这样是不是也就顺滑了很多？但是，想想也知道字体貌似不支持动画，并且这样很有可能会有性能问题。
 
-
   
-* 从 =text-overflow: ellipsis= 到 =white-space=
+** 从 =text-overflow: ellipsis= 到 =white-space=
   从=text-overflow: ellipsis=开始讨论。
 
   “超出的文本变成省略号”，是很常见的UI需求。怎么做呢？
@@ -537,7 +556,7 @@
   | 遇到换行符则换行，其它字符依然走浏览器默认行为 | 换行                       | pre-line                |
   | 遇到换行符则换行，其它字符依然走浏览器默认行为 | 不换行                     | 不存在                  |
   |------------------------------------------------+----------------------------+-------------------------|
-* 让"to-do"不在"-"处断词。
+** 让"to-do"不在"-"处断词。
   默认情况下，断词规则是=word-break=的，但是遇到'-'的时候浏览器会允许断词。英语中'-'其实有两个作用：
   1. 断词。即行末写不下某个单词了，要把单词拆开到两行写，则要以'-'结尾，表示这里断词了。
   2. 连词。某些单词是由两个单词连在组成的，如=to-do=。
@@ -545,9 +564,20 @@
   很显然，当一个词是连词的时候，'-' 又不小心被当作断词符了，那么可能会引起歧义。当你认为它是断词符号的时候，"to-(第一行行尾巴)do(第二行行首)" 就变成了"todo"，而实际上你希望它被视为“to-do”（ps. 虽然这里"todo"与“to-do”并无二意）。这个时候浏览器希望你告诉它，'-'是连词符号，请不要以它为断词符，以免引起歧义。你只需要把'-'改成=&#8209;=即可。
 
   这个特殊符号叫[[https://en.wikipedia.org/wiki/Wikipedia:Nonbreaking_hyphen][Nonbreaking hyphen]]。
-* non-breaking space与一个设计原则
+** non-breaking space与一个设计原则
   今天我才知道一直算是“误解”了一个特殊符号=&nbsp;=。以前我一直以为它是“空格”的转义字符，实际上这个定义不准确，准确的定义是--"Non-breaking space"。因为一般的空格可以被断行的，只要换成这个"Non-breaking space"，浏览器就不会在此处断行。虽然说它也可以用来产生“多个空格”，但是更高级的用法是防止最后一行只有一个单词。
   “最后一行不要只有一个单词”，这是designer告诉我的，我觉得很合理。如果只有一个单词，总觉得“多余”、不完美。所以，完美一点的做法是把最后一个“空格”替换成“不断行空格”，这样强行让浏览器最多只能在倒数第二个空格处断行，从而避免一个单词一行的情况。
+** white-space, word-break, word-wrap(overflow-wrap)三者的关系
+   简单来讲，三者有一定的依赖关系，按顺序来说，后者依赖前者。
+
+   先说=whtie-space=，它定义如何对待空白字符，这个前面也说过了。如果=white-space=设置成需要换行的值，那么如何换行？也就是说在文本的哪个地方换？
+
+   =word-break=，就是处理这个问题的，它定义如何换行。=normal=下以单词为单位进行断行；=break-all=是强制短行，单词会被粗暴的拆掉；=keep-all=，与normal类似，不过CJK文本不会被断行。这看似已经很完美，但是有一种情况，=word-break=并没有处理，那就是“当一个单词本身的长度就已经overflow了，怎么办？”，当然了=break-all=不会有这个问题，=normal=跟=keep-all=都存在这个问题。
+
+   =overflow-wrap=就是用来处理这个问题的。当把值设置成=break-word=的时候，那种一个单词就会overflow的单词会被从中断掉。这个属性有个别名，叫=word-wrap=。另外，部分浏览器支持=word-break: break-word=，它等价于：=word-break: normal; overflow-wrap: break-word=。
+
+   总结。现在回头看看，如果没有换行，就没有word-break什么事情。如果word-break选择break-all，不存在单个单词overflow的问题，也就没有overflow-wrap什么事情。
+
 * AOS animation on-scroll
   [[%E4%BC%A0%E9%80%81%E9%97%A8][https://michalsnik.github.io/aos/]]
   这个库不错
@@ -598,18 +628,4 @@
   所以，如果你要获取一个元素顶部到body顶部的距离，那就需要通过=offsetParent=一层一层递归下去，把每一层的=offsetTop=也累加起来才行。
 
   这里有个点要注意：offsetTop是不会以=transform=之后的位置为准的，所以如果你发现得到的=offsetTop=不“准确”，那你要看看元素是不是被=transform=了。
-* 字体对齐问题 -- how to compute inline element height
-  今天遇到一个字体对齐问题，使我对=height=有一个更深入的认识。
-  先前就已经知道，block element的height如果是auto的时候，其computed height的计算方式是：max(computed line-height of inner inline element)。现在公司使用的字体是ProximaNova，它渲染出来的inline element的height刚刚好就是赋予的font-size。这使我有2个错误的认识：
-  1. 我以为所有的inline element的height就应该等于font-size
-  2. 在处理一些字对齐的问题的时候，经常使用line-height=1，然后height与computed line-height刚好相等，这让我以为inline element height与line-heigth就是同一个东西
 
-  先描述一下今天做的题目，写一个天气预报的界面（[[file:attachments/compute-inline-element-height.webarchive][web archive]]），我在处理底部的“温度”与“风向”、“湿度”的对齐问题的时候陷入了困境。温度的font-size为45px，然后“风向”的顶部要与“温度”的顶部对齐，“风向”的底部要与“湿度”的底部对齐。我一开始以为用个grid布局（如我css所写），并且所有line-height都设置为1，然后“风向”与“湿度”各自的align-self分别为start跟end就能很完美的解决这个问题了。
-
-  结果让我大跌眼镜。非常的不对齐，我给温度里面的文本包个span，从dev tools看到它的高度竟然是61px（使用'Open Sans'字体时）。由于之前经验的误导，我一时陷入了迷茫，我以为是自己乱秀grid布局导致的问题。然后，我脱离grid布局，写了个span，发现高度还是61px。最后，Google了一下，才发现之前的认识是错误的。
-
-  首先，=height of inline element= 与=inline-height of inline elment=是完全不一样的概念！虽然，那个span的height是61px，但是它的computed inline-height依然是45px * 1，所以包裹它的div的高度也是45px。
-
-  其次，=height of inline element=并不一定会等于font-size，css2.2里有说，见[[https://www.w3.org/TR/CSS22/visudet.html#inline-non-replaced][文档]]。它根本不受css标准控制，不同的字体会渲染出不同的结果。我在那个web archive文件里上面写了好几个font-size为45px的span，每个span字体不同，它们的height也完全不一样，有的61px，有的51px，有的刚好等于45px。
-
-  最后，=height of inline element=非常大概率下是不等于实际渲染出来的字的高度。所以，如果两列字的font-size差很大，你还想让它们水平对齐，那只能比较hack的的方式去微调了，比如用margin或者绝对定位，[[file:attachments/hack-adjust-vertical-align.png][如图]]。
