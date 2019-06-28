@@ -6,7 +6,7 @@
 *** 我的一点个人理解
   继承是复用代码的一种常用手段。js的继承机制采用原型链~ 个人感觉这可能仅仅是为了方便，可以直接“草率”的写下一个对象“面量”，而不用Java那样什么都经过精心的绘制对象的蓝图（类），然后才能“实例化”。它的哲学貌似是直接以某个对象为蓝图~ 我不知道这样做是好事坏！对于遍地需要大型前端项目的今天，基于原型的继承貌似有点承受不住了！
 
-  JavaScript的继承数据结构——原型链，需要强调的是 *原型* 二字，也就是上面提到的内容，而不是 *链* 这个字。目前我个人所知道的继承机制都是采用链式结构，包括Java。这点很好理解，因为继承是有“先来后到”的，继承经常需要“纠结”的就是顺序问题。链式结构自然的描述了这种先来后到的关系。
+  JavaScript的继承数据结构——原型链，需要强调的是 *原型* 二字，也就是上面提到的内容，而不是 *链* 这个字。目前我个人所知道的继承机制都是采用“类链式”结构，包括Java。这点很好理解，因为继承是有“先来后到”的，继承经常需要“纠结”的就是顺序问题。链式结构自然的描述了这种先来后到的关系。
 
 *** 原型链的数据结构
     原型链有点像数据结构中的链表，总体而言它包含两部分:
@@ -67,7 +67,7 @@
 
       // 通过new创建的实例都会有一个constructor属性指向构造函数
       // 除非你在prototype里也顶一个了一个constructor把它覆盖了
-      animal1.constructor === Animal1; // true
+      animal1.constructor === Animal; // true
     #+END_SRC
 
     接下来开始继承，以Cat继承自Animal为例:
@@ -85,8 +85,11 @@
               configurable: true,
               writable: true
           },
-          catchMouse () {
-              console.log('我在抓老鼠');
+          catchMouse: {
+              // props 描述省略
+              value: function() {
+                  console.log('我在抓老鼠');
+              }
           }
       });
 
@@ -97,6 +100,31 @@
     #+END_SRC
     继承的关键在于指向好原型链，通过Object.create来创建并隔离父类的原型而不是直接让子类的prototype等于父类的prototype，这样做不到修改隔离。
 
+*** 实现一个instanceof()
+    对于=a instanceof B=, instanceof这个操作符的本质是，确认B.prototype在不在a的原型链上。可以说，这个操作符跟=new=是配套使用的。
+
+    #+BEGIN_SRC javascript
+      function myInstanceOf(obj, constructor) {
+          while(obj) {
+              if (obj === constructor.prototype) {
+                  return true;
+              } else {
+                  obj = Object.getPrototypeOf(obj);
+              }
+          }
+
+          return false;
+      }
+    #+END_SRC
+
+    
+*** obj.constructor.prototype
+    今天又手写了一遍继承之后发现，貌似ins.constructor.prototype也可以获取对象的原型，为什么之前没有注意？其实我以前用过这种方法，再模拟es6 class实现一个vue实例的super utils的时候。
+
+    但是现在回头想想，这种获取原型的方式是有局限性的。new出来的instance的确可以这样做，但是Object.create出来的对象呢？
+
+    所以，es6下获取原型的最保险的方式还是通过Object.getPrototypeOf
+    
 *** Object的API
     js中，几乎所有的对象都继承自Object，所以Object的API几乎适用于所有对象
 
@@ -261,9 +289,11 @@
   第三部分：history变化的事件
   - window.onpopstate :: pushState、replaceState不会触发这个事件
     
-  我以前一直不知道如何用history api如何支持path的路由控制。现在算明白了。方式如下：
+  我以前一直不知道如何用history api支持path的路由控制。现在算明白了。方式如下：
   - window.onpopstate监听“前进”、“后退”的路由变化方式
-  - 自己封装函数，当调用pushState的时候，也调用一下路由变化的监听函数
+  - 自己封装函数，当调用pushState的时候，也调用一下路由变化的监听函数。这也是为什么vue-router之类的函数监听不到你自己裸调用的pushState、replaceState的原因。我之前傻傻的，一直卡在这里，希望onpopstate能监听到这两个函数的调用，其实就是自己调用的时候，触发一下onpopstate的handler就好了嘛。
+
+
 * 单元测试仿真库 -- sinonjs
   之前用的是testdouble（测试替身），有了上次的经验后，这次使用sinonjs就比较顺畅了。对Fake、Spy、Stub、Mock也有了新的理解。
 
