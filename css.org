@@ -371,7 +371,7 @@
    其实，这里我最新讨论的是，到底该不该记哪些属性是默认继承的？哪些不是？我在重新学习之前，好像感觉记一下很重要。但是现在想想，却觉得去记哪个会继承哪个不会是很愚蠢的。先不记吧！哪天可能会发现其中的规律。
 
 * Visual Formatting Model
-  BFC（Block Formatting Context）与IFC（Inline Formating Context）是CSS两个非常重要的概念。它们的内容主要集中在CSS2.2文档的9、10两章。
+  BFC（Block Formatting Context）与IFC（Inline Formatting Context）是CSS两个非常重要的概念。它们的内容主要集中在CSS2.2文档的9、10两章。
 
 ** Readding Log
    对于“成果”，我更喜欢了解其达成的 =过程= 、其 =发展的历史= 、存在的 =原因=  ，而不是其本身。阅读 =Visual Formatting Model= 的时候，我希望多记录一些阅读过程中的思考，我称之为日志。
@@ -449,6 +449,75 @@
     2. 对外。分为几个方面：
        1) 排列。Inline元素在同一行从左往右，一个接一个的排列，直到排不下换行。一个行内元素也可能独自占用多行。
        2) 行高。Inline元素的行高，基本取决于自身的line-height属性，但是对于设置height有效的元素（一般是replaced element），则其line-height属性无效，它的真实“line-height”就是“元素本身的高度”！
+
+** BFC与IFC
+   虽然现在也没有完全读懂css2.2的9、10两章，但是我突然觉得之前太拘泥于要先看懂文档上的概念了。今天突然觉得理解什么是BFC与IFC，以及为什么。
+
+   简单来说，它们都是一种格式化上下文。那么什么时候需要有不同的上下文呢？
+
+   一个元素浮动了，它内部的布局脱离了它的父文档流，这就需要一个新的格式化上下文；一个iframe标签，内部是一个全新的html元素，它当然也需要一个全新的上下文；一个overflow不为visible的元素，本质上就是在内容拥有一个新的“小天地”，它也会有一个新的格式化上下文。这些都是Block级别的格式化上下文
+   那么什么时候需要Inline级别的格式化上下文呢？一段文本，某些内容颜色是红色，某些是黑色，剩下的全是蓝色，如何做到？也是需要至少三个IFC才能做到。
+
+** the containing block
+   =the containing block=是个重要的概念，大部分box的定位跟大小计算都跟它的containing block有关。下面，搬运css2.2 10.1章的定义：元素的定位、大小的计算有时候跟一个矩形有关，这个矩形叫做这个元素的containing block。css2.2再第九章特别强调，“某个元素的containing block”不是指它产生的containing block，而是指包含它的那个containing block。下面说说如何确定一个element的containing block：
+
+   1. 对于root element而言，它的containing block几乎等于viewport，这个containing block叫做初始containing block；
+   2. 对于position为static，relative的element而言，它的containing block由最近的一个祖先block container的box（或者产生BFC的box）的 **content edge**形成
+   3. 对于position为fixed的element而言，它的containing block由viewport产生（与第一点类似）。
+   4. 对于position为absolute的element而言，它的containing block由最近的一个position为absolute、relative、fixed的祖先element的**padding edge**形成。实际情况比这复杂，我这边没有引入inline elment之类的情况，我自己也没搞懂，感觉这种case遇到的机率太小，就先跳过。
+   
+** margin
+   关于margin，这里就只讨论=block-level element in normal flow=的情况，在其它情况下规则非常的多、琐碎，遇到了当场调试、查文档就好了。css2.2用了整整10个小章节来说明这些情况，详见css 2.2 10.3。
+
+*** percent的margin值
+    percent的margin值，都是以元素的containing block的**width**来计算的！这点需要特别注意，不要以为margin-top跟margin-bottom是以containing block的height来计算的。
+
+    所以，这里需要特别注意，containing block的**width**是什么？它可能是content edge，也可能是padding edge，但绝不是order edge。详见containg block的定义。
+    
+*** 水平margin -- 重要公式：border-sizing width + horizontal margin = containning block width
+    这个公式的意思是：margin-right + margin-left + (content width + left-border-width + right-border-width + left-padding-width  + right-padding-width)要等于containing block的宽度。这个公式非常重要！为了简便性，我将括号里面的公式缩写成border-sizing width。
+
+    说得绝对一点，这个公式永远成立。但是，现实是很残酷的，假设containing block width固定为500px，这个时候把元素的width设置成1000px，这个公式不就崩了吗？的确是会崩，但是css却坚决要让这个公式成立，所以就会有很多奇奇怪怪的行为。在介绍这些奇怪的行为之前，先说一下css是如何让公式保持成立的。
+
+    css会从上述公式中找出一个变量，用来补差值。为了满足公式，把差值全部都放在这个属性上。下面，依然假设containing block width为500px。
+
+    1. 当width为auto时，差值全部部给width。比如：margin-left: 1000px; margin-right: 10000px，这时候width = 500px - 1000px - 1000px，渲染出来的结果就是width为0。如果margin都是负数，你就会发现width被拉宽了。
+    2. 当某一个margin为auto，且width不为auto的时候，行为跟第一点类似。
+    3. 当两个margin都为auto，且width不为auto的时候，有两种情况：
+       1. border-size width大于等于500px，那么以margin-right为auto，而margin-left视为0
+       2. border-size width小于500px，那么margin-left跟margin-right均分剩余的差值。这也是margin: 0 auto；能让元素水平居中的原因。
+    4. 当没有一个属性为auto的时候，强制以margin-right为auto，不管margin-right一开始被设定了什么值
+
+    记住这几点，你就能玩转horizontal margin的auto、跟负值的情况。非常的酸爽。。。
+
+*** 垂直margin
+    水平margin的计算情况，实在是有那么点变态！相对而言，垂直margin相对简单多。
+
+    首先，垂直的margin为auto时，它总是为0。
+    另外，它满足公式：=border-sizing-height + vertical-margin= = =actual block heigth=，垂直的margin加上element的border-sizing height，等于对外的实际高度。借用水平margin计算方式的说法，对外的block height被拿来补差值。所以，你会发现，如果height=20px，而vertical-margin=-19px，那么对外来说，这个block element只有1px的高度。特别注意：是对外界来说，它的高度只有1px，而实际渲染出来还是20px。这有点类似overflow visible的效果。
+
+    虽然，垂直的margin在计算上相对简单，变化的花样也比较小，但是垂直margin有个魔性的点——margin 坍塌！我感觉，这个得另起一章讲述。
+
+*** 垂直margin的坍塌
+    这里就不说什么是margin的坍塌了。
+
+    垂直的margin为什么要坍塌？我也不知道，之前貌似看到css2.2里讲过，说这样符合开发者的预期。现在已经习惯它会坍塌了，所以也难“追究”这种说法合不合理。总之，只要满足以下情况，垂直margin的就会坍塌：
+    1. 必须处于同一个BFC
+    2. 要坍塌的相邻margin之间没有“内容”阻碍。这里所说的“内容”包含如下case：
+       1. border
+       2. padding
+       3. 清除浮动（这一点我不太知道如何重现，对浮动以及清除浮动的知识已经很模糊了，呵呵）
+       4. 没有任何高度、内容、border、padding的元素，不属于“内容”。
+
+    所以，按着上面的两大点，举一些例子：
+    1. 浮动的元素跟它的父元素的margin不会坍塌，因为float会产生一个新的BFC
+    2. overflow 不为visible的元素的margin不会参与坍塌，因为overflow不为visible的元素会产生一个新的BFC
+    3. 三个连续的div，第一跟最后一个都有margin，而中间一个div什么也没有，高度为0。那么第一跟最后一个div之间的margin会坍塌。因为什么都没有的元素不属于障碍物。
+
+    其实，如何阻止margin坍塌，除了创建障碍物外，还应该多看看如何才能产生一个BFC。css3下，产生BFC的方式非常多，table布局、flex布局、grid布局
+float、overflow不为visible、绝对对应元素等等，详见[[https://developer.mozilla.org/zh-CN/docs/Web/Guide/CSS/Block_formatting_context][BFC]]。
+
+    这里要说一个小插曲——margin坍塌的计算。当两个值都是正数的时候，取大的那个。当存在负数的时候，两个数相加。还是那句话：为什么要这样设计啊！
 
 * Font styling and text styling
 ** @font-face 之 font-display
