@@ -411,3 +411,85 @@ cb1(cb2(cb3(cb4)));
   具体代码见[[https://gist.github.com/mistkafka/3752f515f493df4b6f6cbe666962866c][Fitness process animation]]。
 
   遇到的问题。最大的问题还是对canvas的接口一无所知，另外google到的很多canvas代码真是难看得一B，关键还是自己不熟。
+* Egg Language笔记
+  最近在重新看[[https://eloquentjavascript.net/][Eloquent Javascript]]的[[https://eloquentjavascript.net/12_language.html][Egg language]]（就是用js实现一门叫做egg的编程语言）。为了跟深入的学习js，我尝试往里面加了一些js拥有的特性，如：异步、原型、执行上下文等。收获还挺多的，这里梳理记录下。
+
+  特别说明，这些特性的实现思路都是我自己思考的，跟js的官方实现思路是否一致，还未验证过。所以，不要以为这些实现方式就是主流js解析器的实现方式。
+
+** 实现一门语言的必要基础
+   我做下来的体会是，要实现一门语言只要有些编程基础即可。可以绕过一大堆编译原理里的词法分析、文法分析等前置概念。等你觉得有意思，有点感性认识后，再回头啃这些概念倒是不迟。
+
+   这里推荐两篇入门材料：
+   1. [[http://www.yinwang.org/blog-cn/2012/08/01/interpreter][怎样写一个解析器 -- 王垠]]。王垠的这篇博客，思路清晰、非常的循序渐进，很适合入门。
+   2. [[https://eloquentjavascript.net/12_language.html][Project: A Programming Language]]，就是Eloquent Javascript这本书的第二个项目实践。英文书开源免费，网上也有中文翻译版卖。
+  
+   任意实践上面两篇入门材料后，你基本能对词法上下文、闭包、环境、抽象语法树有概念。
+
+   下面的笔记，都是基于材料2的。
+
+** 执行上下文
+   我的思考过程：
+   1. 执行上下文肯定是一个运行时的概念，所以应从=evaluate=函数入手；
+   2. this，本质上可以视作一个特殊的变量，既然是变量，那只要执行前注入到localEnv就好了；
+   3. 现在已经知道在哪里注入执行上下文了，那么这个执行上下文哪里来呢？
+   4. 突然想起python的method声明方式，第一个参数始终是self，我突然觉得执行上下文应该在apply的时候，作为第一个参数注入进来。
+
+   上面是比较顺利的思考过程，再接下来我就陷入一个困境当中。我们在js中，我们能感受到执行上下文的存在的场景有两个：1) =a.f()= 这种调用；2) =var b = a.bind(c)= 这种绑定上下文的操作。我被前一种场景给难住了，一时不知道怎么实现，因为我一直想通过我前面实现的=objectGet=来实现=a.f()=这种调用，但是实际上=objectGet=只相当于=a.f=，而不能做到=a.f()=。
+   又过了一天后，重新回来面对这个问题的时候，我决定先跳过=a.f()=这种调用，我相信，只要上下文绑定能实现，那么=a.f()=这种调用也就迎刃而解了。所以，我决定先实现一个bind函数。
+
+   bind函数很快实现出来了，接受两个参数，=fn=跟=context=，代码如下：
+   #+BEGIN_SRC javascript
+topEnv['bind'] = function (fn, context) {
+  return function (_, ...args) { // _ 这是原来注入的contenxt，摒弃不要了
+    return fn(context, ...args);
+  }
+};
+   #+END_SRC
+
+   这其中出了一些问题。我没有意识到topEnv里的这些build in函数，本质上跟specialForm里的fun的返回值是等价的，所以这些build in函数的第一个参数也都是一个执行上下文--它们被执行时的上下文，所以代码变成：
+   #+BEGIN_SRC javascript
+topEnv['bind'] = function (ctx, fn, context) { // ctx是bind函数的执行上下文，context是要绑定给fn的执行下文
+  return function (_, ...args) {
+    return fn(context, ...args);
+  }
+};
+   #+END_SRC
+
+   下一段egg代码测试一下结果：
+   #+BEGIN_SRC 
+run(`
+do(
+  define(display, fun(print(objectGet(this, "name")))),
+
+  define(obj1, objectCreate(null)),
+  objectSet(obj1, "name", "kafka"),
+
+  define(obj2, objectCreate(null)),
+  objectSet(obj2, "name", "kk"),
+  
+  define(obj1Display, bind(display, obj1)),
+  define(obj2Display, bind(display, obj2)),
+
+  obj1Display(),
+  obj2Display(),
+)
+`);    // --> kafka\nkk
+
+   #+END_SRC
+   非常完美
+
+   实现完bind之后，发现js里=a.f()=这样调用就简单很多。首先，需要再次说明=a.f()=其实是两个动作，我想起之前玩es6的Proxy的时候，=a.f()=这样的调用会触发两个Proxy：getter、apply。所以，我不执着于怎么用=objectGet=来实现，我决定新增一个build in函数叫=objectGetApply=来实现。代码如下：
+   #+BEGIN_SRC python
+topEnv['objectGetApply'] = function (ctx, obj, key, ...args) {
+  const fn = obj[key];    // 函数所在的obj就是函数的执行上下文
+  return fn(obj, ...args);
+};
+   #+END_SRC
+
+   代码详见这个commit：[[https://github.com/mistkafka/eloquent_javascript_code/commit/0d6ff08597174e3d354490828d5fd23dc5e97c55][egg language, support execute context]]
+
+   在写笔记的时候，我突然意识到，类似=fn.bind(ctxA).bind(ctxB)=这样的结果是什么？ 我期望的是ctxB绑定到fn上。可事实是，这种期望即办不到也不合理，想想为什么？
+
+
+
+
