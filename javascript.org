@@ -427,6 +427,87 @@ cb1(cb2(cb3(cb4)));
 
    下面的笔记，都是基于材料2的。
 
+** 事件循环
+   事件循环的实现，基本没有什么难点。只要对js的时间循环
+
+   思考过程：
+   1. 先只实现宏观任务队列，再考虑微观任务队列；
+   2. 原本的run函数，执行完毕就退出了，这里肯定要改成一个循环，那么什么时候退出呢？
+   3. 当宏观任务队列不为空、或者有异步任务未ready的时候，就一直待在循环里。但是，一直死循环也不行，每次sleep 0.1秒去检查状态吧！
+
+   异步操作有很多，网络请求、定时器、读文件操作等等，我们这就只实现定时器这种异步操作。需要特别注意的是，需要了解宏观异步任务要经历：被创建、异步任务被执行、异步任务执行完毕（ready状态）推入异步任务队列这三个过程。
+   1. 首先，我们需要用一个变量作为计数器，表示未ready的宏观异步任务数量；
+   2. 其次，我们需要一个数组，承载ready的异步任务；
+   3. 程序一开始的时候，把程序包装成一个ready的task，推入异步任务队列，然后进入循环；
+   
+   代码如下：
+   #+BEGIN_SRC javascript
+let unreadyAsyncTaskCount = 0;
+const MAJOR_TASK_QUEUE = [];
+
+function sleep(second) {
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, second * 1000);
+  });
+}
+
+async function run(...args) {
+  let env = Object.create(topEnv);
+  let program = args.join('\n');
+
+  MAJOR_TASK_QUEUE.push(() => evaluate(parse(program), env));
+
+  while (MAJOR_TASK_QUEUE.length > 0 || unreadyAsyncTaskCount > 0) {
+    if (MAJOR_TASK_QUEUE.length) {
+      const task = MAJOR_TASK_QUEUE.shift();
+      task();
+    } else {
+      await sleep(0.1);
+    }
+  }
+}
+   #+END_SRC
+
+   接下来，再让我们实现egg的=setTimeout=等函数
+   #+BEGIN_SRC javascript
+topEnv['setTimeout'] = function (ctx, callback, ms) {
+  unreadyAsyncTaskCount = unreadyAsyncTaskCount + 1;
+  return setTimeout(() => {
+    unreadyAsyncTaskCount = unreadyAsyncTaskCount - 1;
+    MAJOR_TASK_QUEUE.push(callback);
+  }, ms);
+};
+topEnv['clearTimeout'] = function(ctx, timer) {
+  unreadyAsyncTaskCount = unreadyAsyncTaskCount - 1;
+  clearTimeout(timer)
+};
+topEnv['setInterval'] = function(ctx, callback, interval) {
+  unreadyAsyncTaskCount = unreadyAsyncTaskCount + 1;
+  return setInterval(() => {
+    MAJOR_TASK_QUEUE.push(callback);
+  }, interval);
+};
+topEnv['clearInterval'] = function (ctx, timer) {
+  unreadyAsyncTaskCount = unreadyAsyncTaskCount - 1;
+  clearInterval(timer);
+};
+   #+END_SRC
+
+   这里，不要把js的setTimetout系列函数跟egg的setTimeout系列函数混了。如果你觉得同名看起来太乱，可以给egg的加前缀。
+
+
+   然后，写段测试代码测试一下：
+   #+BEGIN_SRC javascript
+// support async api
+run(
+  'do(define(cb, fun(print("async print"))), setTimeout(cb, 1000), print("sync print"))'
+); // --> sync print\nasync print
+   #+END_SRC
+
+   那么如何实现微任务队列呢？其实也很简单。首先，微任务没有等待ready的过程，所以直接插入微任务队列就好了；其次，只要知道微任务的执行优先级高于宏任务就可以了。
+
+   更具体的代码见这两个commit：[[https://github.com/mistkafka/eloquent_javascript_code/commit/012875984f993df9855f0db0d355dfc859970a96][egg language support async operator]] 跟 [[https://github.com/mistkafka/eloquent_javascript_code/commit/70a2ac9d5beb0154bc5dc0f245d4d89cd127a16f][egg language support micro task queue]]
+   
 ** 执行上下文
    我的思考过程：
    1. 执行上下文肯定是一个运行时的概念，所以应从=evaluate=函数入手；
