@@ -508,7 +508,12 @@ run(
 
    更具体的代码见这两个commit：[[https://github.com/mistkafka/eloquent_javascript_code/commit/012875984f993df9855f0db0d355dfc859970a96][egg language support async operator]] 跟 [[https://github.com/mistkafka/eloquent_javascript_code/commit/70a2ac9d5beb0154bc5dc0f245d4d89cd127a16f][egg language support micro task queue]]
    
+** 原型链
+   原型链的实现，基本没有什么难点。详见commit：[[https://github.com/mistkafka/eloquent_javascript_code/commit/6cd50cc3af5cfe16680bfbfcefe6a00048c7b50c][egg language, support object and prototype chain]]
 ** 执行上下文
+   在实现完原型后，我想实现new跟instanceof这两个语法糖，然后演示一下egg的继承。但是，我突然发现我漏了this。所以决定先把执行上下文机制给建立起来。
+   我感觉执行上下文机制的实现过程还是比较吃力的，所以这里就多啰嗦一些。
+
    我的思考过程：
    1. 执行上下文肯定是一个运行时的概念，所以应从=evaluate=函数入手；
    2. this，本质上可以视作一个特殊的变量，既然是变量，那只要执行前注入到localEnv就好了；
