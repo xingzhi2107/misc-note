@@ -579,3 +579,26 @@ topEnv['objectGetApply'] = function (ctx, obj, key, ...args) {
 
 
 
+* 将shell命令行问题转化为js问题
+  今天遇到一个这样的问题：
+  有四个目录，drawable-hdpi, drawable-xhdpi, drawable-xxhdpi，每个目录下都用100+个文件，现在你只想保留这四个目录中名字为：daily_log_light.png、daily_log_medium.png、daily_log_heavy.png、daily_log_crimescene.png的文件。
+
+  用shell怎么解决？
+  首先，我想到的是shell的通配符。我知道 =rm !(*hello*)= 表示“删除文件名里不带有hello”的文件，但是怎么表示“不是daily_log_light.png或daily_log_medium.png或...”就不知道如何处理。尝试写了个regex，也还是不work。最后，我索性决定用js来处理这个问题。
+
+  用js怎么处理？
+  以往，我都是直接=node=，然后进入在repl下写js。但是说真的，体验不是很好，而且不利于留存一些脚本。我已经在repl下做过很多次这样的事情了，再也无法忍受这样的体验。我决定变革一下。我很喜欢命令下写临时shell文件并执行的形式，可以按下=Ctrl+x Ctrl+e=试试。这种方式是打开一个临时文件，等你写完保存并退出后，执行这个文件。js是不是也可以这样呢？我决定试试。
+
+  新的解决方案。
+  我按照之前的思路，发现js也是可以做到的。方案如下
+  1. 建个文件夹，比如=~/bin/=，并讲它添加到PATH环境变量里
+  2. 建个可执行的js文件，例如=~/bin/tmp.js=。可执行的js需要要求：
+     1. 文件可执行，运行=chmod +x ~/bin/tmp.js=即可
+     2. 文件头要有这样的声明=#!/usr/bin/env node=，表明使用node来执行这个文件
+  3. 运行 =vim ~/bin/tmp.js && tmp.js=，就能达到shell的=Ctrl+x Ctrl+e=的效果。写个hello world试试，保存并退出后是不是立即执行了？
+  4. 再给这个命令加个alias，这样就不用每次都打那么长的命令了。
+
+  这样，我就可以很方便的写js，并执行它。随着时间的推移，肯定会积累一些通用、方便的操作符，这样对shell的一些操作，肯定能越来越有效率。
+ 
+  一点小建议。
+  在执行任何删除、变更命令之前，一定要有一步，确认环节。比如，把要删除的内容打印出来，确认了，再执行真正的删除。另外，其它语言如：ruby、python也可以按照这样的思路来做。总而言之，如果你不是非常精通shell，那么复杂的shell问题，可以转化为你熟悉的语言来解决。
