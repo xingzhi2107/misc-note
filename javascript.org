@@ -331,6 +331,8 @@
    1. 服务端渲染场景下，将一个token渲染到form的一个隐藏域中，提交的时候带上。这种请求无法被src或者跨域form表单伪造。
    2. 前端Ajax请求场景下，将token存放在Cookie（非HTTP Only）中，然后在发请求的时候取出放到body或者header中。这种目前也无法被伪造。
 * async与await是如何从generate演化而来的？
+  一下内容太监，标题太大，弃文。
+
   先举一个简单的例子，假设有一个数组：callbacks[cb1, cb2, cb3...cbn]，里面都是回调函数。每个回调函数自己又会执行一些异步操作，也就是说会注册这个异步操作的回调函数。碰巧，我们需要cb1的异步操作的回调是cb2、cb2的异步操作的回调是cb3，以此类推，我们应该如何把这些回调函数给链起来呢？
 
   我们先来想想，这些函数的签名大概是怎样的。首先，它们自身是作为回调函数的，所以一般会有个参数才接受异步操作拿回来的结果，设为 *data* 。其次，它们会再执行异步操作，并且注册回调函数，一般而言回调函数需要从外界传入，这样更更灵活，所以还有一个参数用来承接回调函数，为了不跟上面的cb1、cb2混淆，我们设为 *nextCb*——下一个回调。那么cb1、cb2...cbn的函数签名大概就长这样：
@@ -602,3 +604,128 @@ topEnv['objectGetApply'] = function (ctx, obj, key, ...args) {
  
   一点小建议。
   在执行任何删除、变更命令之前，一定要有一步，确认环节。比如，把要删除的内容打印出来，确认了，再执行真正的删除。另外，其它语言如：ruby、python也可以按照这样的思路来做。总而言之，如果你不是非常精通shell，那么复杂的shell问题，可以转化为你熟悉的语言来解决。
+
+  新的发现。
+  试用了几次，发现这样有时候也不是很爽。有些时候，还是node那种repl的模式比较方便。但是，每次进入repl又要手动load一些东西，不然每次都从头写太浪费时间了。去搜索了一下，找到一个自动load的方案：
+
+  #+BEGIN_SRC shell
+> NODE_PATH=/Users/zhenguo/bin/node_modules node -i -e "$(< ~/bin/utils.js)"
+  #+END_SRC
+
+  讲解。使用=-i=参数使之强制进入repl模式，而=-e=参数就是执行一段js，再后面的是shell的指令，可以把=~/bin/utils.js=的内容作为输入喂给=node -i -e=。整句话的意思就是，强制进入repl模式，并且在repl下执行=~/bin/utils.js=的内容。这样，你只需要把一些积累下来的工具函数放在那个文件里，每次启动的时候就不需要再手动载入了。至于=NODE_PATH=，这个环境变量，是为了保证你的=utils.js=能load到js库，具体参见node官方文档。
+
+* 思考：js的异步解决方案演化——从回调地狱到async
+  以前看过别人写async是如何实现的之类的文章，不过现在忘了。之前重新思考这个问题的时候，就突然想到为什么不从更“源头”的地方开始想起呢？
+  不过这个问题搁置了很久，去年重新复习js的时候开始有了这个想法，并开始思考，但是很快被搁置了，直到今年。希望，今年能把这条线路打通。
+
+** 从回调地狱到异步调用链
+   将回调地狱转化为异步调用链的做法，有点像将递归实现改成循环实现。回调地狱大家应该都知道是什么了不再多说，这里就说明一下我所说的“异步调用链”是什么。直接上代码：
+   #+BEGIN_SRC javascript
+     function afterOneSecond(currSecond, cb) {
+         setTimeout(() => {
+             const second = currSecond + 1;
+             console.log(second + 's');
+             cb(second);
+         }, 1000);
+     }
+     asyncChain([
+         (_, next) => afterOneSecond(0, next),
+         (val, next) => afterOneSecond(val, next),
+         (val, next) => afterOneSecond(val, next),
+         (val, next) => afterOneSecond(val, next),
+         (val, next) => afterOneSecond(val, next),
+     ])
+
+     // result:
+     // 1s
+     // 2s
+     // 3s
+     // 4s
+   #+END_SRC
+
+    在实现出promise之前，我准备先实现出这种粗糙的异步调用链。
+
+
+   让我们开始吧，先来看回调地狱：
+   #+BEGIN_SRC javascript
+  setTimeout(() => {
+    console.log('1s');
+    setTimeout(() => {
+      console.log('2s');
+      setTimeout(() => {
+        console.log('3s');
+        setTimeout(() => {
+          console.log('4s');
+        }, 1000);
+      }, 1000);
+    }, 1000);
+  }, 1000);
+   #+END_SRC
+
+   我故意将它写成每一层的操作都很类似，这样容易让我们想到用递归的方式去实现上面的代码：
+   #+BEGIN_SRC javascript
+  function afterOneSecond(currSecond) {
+    setTimeout(() => {
+      const second = currSecond + 1;
+      console.log(second + 's');
+
+      if (second < 4) {
+        afterOneSecond(second)
+      } else {
+        // exit recursion
+      }
+    }, 1000);
+  }
+  afterOneSecond(0);
+   #+END_SRC
+
+   你可能会说，实际情况根本不可能让每一个异步调用都类似，从而让你可以用递归来表示。其实问题不打，即便各个异步调用很不一致，我们也可以给每一个异步操作包上一层统一的外衣。这个先搁置不谈，来说说怎么把上面这个递归改实现改成一个循环实现吧！
+
+   在这个过程中，我主要遇到了两个问题：
+   1. 执着于for循环，导致实现起来比较棘手；
+   2. 没有搞清楚回调地狱的依赖本质，从而一开始搞错遍历的方向；
+
+   关于第一个问题。for循环本质可以视为遍历数组，所以只要是数组遍历就ok。总之，不该拘泥于此。
+   关于第二个问题。可能是上面的那个递归版本的代码给了我误导，让我没有意识到“前一个异步操作，总是依赖后一个异步操作”（递归只要依赖自己就行了），所以总是想前往后遍历，但实际上从后往前遍历会方便很多。
+
+   摸爬滚打后，得出实现代码：
+
+   #+BEGIN_SRC javascript
+     function asyncChain(fns) {
+         const headFn = fns.reduceRight((next, fn) => { // 从后往前遍历
+             // 将当前异步函数包裹成前一个异步函数的next
+             const newNext = (val) => fn(val, next);
+             return newNext;
+         }, () => {}); // 最后一个函数的next为空
+         headFn();
+     }
+
+     function afterOneSecond(currSecond, cb) {
+         setTimeout(() => {
+             const second = currSecond + 1;
+             console.log(second + 's');
+             cb(second);
+         }, 1000);
+     }
+     asyncChain([
+         (_, next) => afterOneSecond(0, next),
+         (val, next) => afterOneSecond(val, next),
+         (val, next) => afterOneSecond(val, next),
+         (val, next) => afterOneSecond(val, next),
+         (val, next) => afterOneSecond(val, next),
+     ])
+   #+END_SRC
+
+   在这里，其实我已经同一化了异步函数的接口，也就是我上面说的“包上一层统一的外衣”。
+
+   异步调用链，铺平了回调地狱，并且统一异步调用之间的传值方式。
+
+   那么铺平的异步调用链，如何向promise演进呢？先看看promise做了什么事情？
+   1. 铺平异步调用；
+   2. 向外暴露了异步状态，有点发布订阅者的感觉；
+   3. 统一异步与异步之间的传值、异常传递；
+
+   我决定先实现一个只做到第一点的简易promise。
+
+** 从异步调用链到promise
+   
