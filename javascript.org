@@ -728,4 +728,42 @@ topEnv['objectGetApply'] = function (ctx, obj, key, ...args) {
    我决定先实现一个只做到第一点的简易promise。
 
 ** 从异步调用链到promise
-   
+* getter/setter与IO操作
+  今天要写一个跑在浏览器端的脚本，因为需要reload，所以只能通过localStore来存储状态。
+
+  不停的getItem，setItem让我觉得有点烦了。于是，我用Proxy，实现了一个可以点操作的store，代码如下：
+  #+BEGIN_SRC javascript
+  const store = new Proxy({
+    task: null,
+    keywords: [],
+    links: [],
+    walkedLinks: [],
+    products: [],
+    currentKeyword: null
+  }, {
+    get(target, key, receiver) {
+      const itemKey = 'GLOW_KEY_' + key;
+      const strValue = localStorage.getItem(itemKey);
+      if (strValue) {
+        return JSON.parse(strValue);
+      } else {
+        return Reflect.get(target, key, receiver);
+      }
+    },
+    set(target, key, value, receiver) {
+      const itemKey = 'GLOW_KEY_' + key;
+      const strValue = JSON.stringify(value);
+      localStorage.setItem(itemKey, strValue);
+    }
+  });
+  #+END_SRC
+
+  这样用的时候似乎是方便了一些，但其实隐患极大。
+  1. =store.products= 这句话每次执行getter操作的时候，都会产生一个新的products对象。是每一次噢！不要以为store是个普通的对象。
+  2. =store.products.push(x)= 并不会自动同步到localStoreage。原因同第一点一样，因为它是一个全新的对象。
+  3. 不管是setter还是getteer操作，每次都伴随着一次I/O操作，当然大概率下不会有大问题。
+
+  我使用完之后觉得，I/O操作不适合封装成这种隐式的getter/setter操作，而是应该：
+  1. 采用函数调用，这样很容易知道你获得的是一个副本，并且函数相对于getter/setter会让人更注意操作是不是I/O操作；
+  2. 或者，像很多ORM框架一样，采用所谓的instance缓存起来，需要写回storage的时候，显示的调用commit()。这样虽然依然使用getter/setter，但是因为commit的存在，开发者就会注意到那是I/O操作，又因为是缓存起来的，所以多次的getter操作拿到的对象也是同一个对象。
+
