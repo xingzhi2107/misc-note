@@ -1,0 +1,23 @@
+#+TITLE: TypeScript Examples
+
+* mapped type object
+  场景：
+  有时候会有这样定一个系列的string type
+  #+BEGIN_SRC typescript
+type Modes = 'tag' | 'name' | 'author';
+  #+END_SRC
+  然后需要又需要以这些合法的=Modes=为key，生成一个objct。但是，如何保证object只有这些key呢？
+
+  这时候就需要用到mapped type object，写法如下：
+  #+BEGIN_SRC typescript
+type TheMapYouWant = {
+  [key in Modes]: string; // 假设value类型是string
+}
+  #+END_SRC
+
+  总是犯的错。每当我想写出上面的结果的时候，总是会写成indexd type：
+  #+BEGIN_SRC typescript
+type TheMapYouWant = {
+  [key: Modes]: string; // 假设value类型是string
+}
+  #+END_SRC
