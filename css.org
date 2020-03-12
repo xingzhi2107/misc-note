@@ -519,6 +519,30 @@ float、overflow不为visible、绝对对应元素等等，详见[[https://devel
 
     这里要说一个小插曲——margin坍塌的计算。当两个值都是正数的时候，取大的那个。当存在负数的时候，两个数相加。还是那句话：为什么要这样设计啊！
 
+** inline formatting
+   - em box :: 字符框，渲染一个字符的格子，em box的高度等同于font-size。但是一个字符渲染的结果可能会超过em box的边界，这个受字体以及实际渲染控制。
+   - anonymous text :: 匿名文本，指的是没有被inline element直接包裹的text
+   - content area :: 内容区，对于non-replaced inline element而言，content area可以是em box的集合，也可以是字符渲染结果的集合，由浏览器决定。这点听起来很难理解。对于replaced inline element而言，其content area由content + margin + border + padding。
+   - leading :: 行距，leading = line-height - font-size，然后leading会被分别均分到content area的顶部跟底部。可以看出，这个leading可能为负数！只有nonreplaced element有leading。
+   - inline box :: 行内框，leading作用到cotnent area的结果就是inline box。但是inline box的height并非就是content area + leading，对于nonreplaced inline element而言，height等于line-height，对于replaced inline element而言，其height就等于content area
+
+   - line box :: 行框，line box就是用来将同一行的inline box包裹起来的box，很自然的，它的顶部就等于最高的那个inline box的顶部位置，而底部就等于最低的那个inline box的底部位置。
+
+   - vertical上的border、padding、margin不会影响nonreplaced element的cotnent area，见下面的代码，去掉border、padding、margin并不会影响布局。这一点呼应上文关于content area的定义
+     #+BEGIN_SRC html
+       <p style="font-size: 12px; line-height: 12px;">
+         This is text, <em>some of which is emphasized</em>, plus other text<br> which is <strong style="font-size: 24px;/*! border: 20px solid; */border-top: 20px solid;border-bottom: 20px solid;padding-top: 10px;padding-bottom: 10px;margin-top: 10px;margin-bottom: 10px;">strongly emphasized</strong> and which is<br>
+         larger than the surrounding text.
+       </p>
+     #+END_SRC
+
+*** vertical align
+    inline formating里的vertical align一直是让我非常之头痛的概念，今天在这里将其斩杀咯～。
+
+    理解vertical align的重点在于两点：
+    1. 理解inline box，以及如何计算inline box的line-height
+    2. 理解line box，以及line box是由line-height最大的那个inline box决定的。
+
 * Font styling and text styling
 ** @font-face 之 font-display
   主要感悟来源以下两篇文章:
