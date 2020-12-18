@@ -768,3 +768,11 @@ topEnv['objectGetApply'] = function (ctx, obj, key, ...args) {
   1. 采用函数调用，这样很容易知道你获得的是一个副本，并且函数相对于getter/setter会让人更注意操作是不是I/O操作；
   2. 或者，像很多ORM框架一样，采用所谓的instance缓存起来，需要写回storage的时候，显示的调用commit()。这样虽然依然使用getter/setter，但是因为commit的存在，开发者就会注意到那是I/O操作，又因为是缓存起来的，所以多次的getter操作拿到的对象也是同一个对象。
 
+* referer header
+  发现已经将近一年处于游荡状态了，好久不记录一些小知识。
+  今天仔细学习下referer header。
+
+  场景是这样的：
+  有个前端跳转页面，还有个后端跳转，这两个跳转的target_url都是可以让输入者随便填的，这样就可以让攻击者把target_url指向他们的挂马网站。一般而言，他们的挂马网站会被各大浏览器、网站加入黑名单的，但是通过我们的域名他们可以绕过这个黑名单。我感觉应该是一定程度上，不一定就都能绕过，不过这个概率不重要，我们要做的是尽可能把这个概率降低。我们想探索一下，是不是只要验证referer header就可以了。
+
+  查阅MDN还是欠点感觉，看完[[http://www.ruanyifeng.com/blog/2019/06/http-referer.html][这篇]]blog就差不多都了解了。类似图片防止外站访问，我们可以在server端、client端都检查一下referrer，只要不是自己的网址，都block住。

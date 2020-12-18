@@ -10,3 +10,21 @@
 
   
   几天没有学习reactjs，突然不知道从何入手？看开源项目？自己写东西？比较迷茫。
+
+* 为什么api请求要放在DidMount里？
+  参阅[[https://zhuanlan.zhihu.com/p/26027085][React Fiber]]。简单来讲，React16之后的componentWillMount可能被调用多次。
+
+
+* React核心概念
+  参考资料
+  - [[https://reactjs.org/blog/2015/12/18/react-components-elements-and-instances.html][Components vs Element vs Instance]]
+    既然function component没有instance，那么所谓的Virtual DOM指的应该是element。
+
+  - [[https://zhuanlan.zhihu.com/p/26027085][React Fiber]]
+
+  - [[https://reactjs.org/docs/reconciliation.html][Diff过程(Reconciliation)]]
+
+  - [[https://reactjs.org/docs/faq-internals.html][Virtual Dom]]
+    Virtual DOM在React的实现里包含了element、fiber。
+
+  - [[http://benweizhu.github.io/blog/2018/04/27/deep-thinking-in-react-8/][benweizhu]] 这个人的博客挺系统的
