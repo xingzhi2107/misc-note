@@ -1,0 +1,5 @@
+#+TITLE: Server Design
+
+
+* API设计规范
+  看到一篇蛮好的[[https://cloud.tencent.com/developer/article/1031107][API设计规范]]，定义了什么情况下使用HTTP Status Code，什么情况下使用业务Status Code。还有对API做了分类，分为“资源操作API”与“业务操作”。
