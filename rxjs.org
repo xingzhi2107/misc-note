@@ -105,3 +105,26 @@
     #+end_src
     
 *** combinationLatest
+* Hot vs Cold Observables
+  好久好久没有用rxjs了，最近业务需要来温习一下一些关键概念。
+
+  把“producer的创建”在observable里面还是外面来作为Hot或者Cold的区分，这种做法不太妥当，看完这篇[[https://medium.com/@benlesh/hot-vs-cold-observables-f8094ed53339#.8x9uam5rg][博客]]后，感觉最好还是理解得深入一点好。
+
+  #+begin_quote
+The act of subscription is the act of “calling” the observable like a function, and passing it an observer
+  #+end_quote
+
+  原文的这句可以作为理解的切入点：订阅的本质就是把observer作为参数，调用observable这个函数，（函数返回一个“取消订阅”的函数）。缩短了说就是：“订阅是一个函数调用过程”。
+
+  举用原文的场景：订阅一个websocket的消息。
+
+  我们可以这两种实现：
+  1. 每一次订阅都新建一个websocket链接
+  2. 多次订阅都是采用同一个websocket链接
+
+  很显然，大部分场景下我们都希望是多次订阅共享同一个websocket链接的，这里可以把场景更具体化一点：你在实现一个邮件客户端，界面上有多个地方都需要订阅邮件更新这个websoket。
+
+  多次订阅共享同一个数据源的observable，社区给它们取名Hot Observables，反之叫做Cold Observables。
+  
+* nested streams
+  [[https://rangle.io/blog/thinking-in-nested-streams-with-rxjs/][Thinking in nested streams with RxJS]]

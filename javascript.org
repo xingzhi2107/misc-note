@@ -776,3 +776,19 @@ topEnv['objectGetApply'] = function (ctx, obj, key, ...args) {
   有个前端跳转页面，还有个后端跳转，这两个跳转的target_url都是可以让输入者随便填的，这样就可以让攻击者把target_url指向他们的挂马网站。一般而言，他们的挂马网站会被各大浏览器、网站加入黑名单的，但是通过我们的域名他们可以绕过这个黑名单。我感觉应该是一定程度上，不一定就都能绕过，不过这个概率不重要，我们要做的是尽可能把这个概率降低。我们想探索一下，是不是只要验证referer header就可以了。
 
   查阅MDN还是欠点感觉，看完[[http://www.ruanyifeng.com/blog/2019/06/http-referer.html][这篇]]blog就差不多都了解了。类似图片防止外站访问，我们可以在server端、client端都检查一下referrer，只要不是自己的网址，都block住。
+* Create Your Own Compiler
+  [[https://citw.dev/tutorial/create-your-own-compiler?p=5][Create Your Own Compiler]]在线的教程
+* chrome devtools
+  这个系列的文章还不错，[[https://zhuanlan.zhihu.com/p/80792297][Link]]。
+  
+* rxjs性能
+  用rxjs改造完entity之后，内存从20mb飙升到500mb，简直吓我一大跳。
+  [[https://blog.bitsrc.io/rxjs-patterns-efficiency-and-performance-10bbf272c3fc][RxJS Patterns: Efficiency and Performance]]，这篇文章不错。我觉得最大的问题应该是pipe里发生了re-subscribe，一般的sub/unsub我都清理得很好的。
+
+* npm包管理
+  
+** peerDependencies
+   [[https://www.cnblogs.com/wonyun/p/9692476.html][这篇]]文章讲得非常不错，另外看了npm官方的[[https://nodejs.org/es/blog/npm/peer-dependencies/][文档]]，peerDependencies不仅仅是为了让host project可以import子依赖，还是为了较少同一个依赖安装多次。
+   之前把一个项目的通用组件抽离出来共享的时候，就出现过因为react-native的版本不一致，导致安装的时候安装了两个rn包。后来把两边的rn版本统一了
+   之后，安装速度明显快了。这个应该是yarn/npm自带的功能，合并同一个依赖范围的依赖，以后可以研究下。如果之前一开始在声明通用组件包的时候，就
+   把react跟rn声明在peerDependencies里，这样顶层项目安装的时候就会因为版本同一致而报warning。
