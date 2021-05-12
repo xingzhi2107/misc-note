@@ -792,3 +792,22 @@ topEnv['objectGetApply'] = function (ctx, obj, key, ...args) {
    之前把一个项目的通用组件抽离出来共享的时候，就出现过因为react-native的版本不一致，导致安装的时候安装了两个rn包。后来把两边的rn版本统一了
    之后，安装速度明显快了。这个应该是yarn/npm自带的功能，合并同一个依赖范围的依赖，以后可以研究下。如果之前一开始在声明通用组件包的时候，就
    把react跟rn声明在peerDependencies里，这样顶层项目安装的时候就会因为版本同一致而报warning。
+
+   另外，不得不说peerDependencies做得还是有问题，当多个package的peerDependencies相互冲突的时候，为之奈何？现在项目经常看到一大片的peer
+   dependencies warning。
+
+* 零配置的代价
+  经过了半天的“试错”，总算把react-native-web的storybook配置好了。怎么好的？我也不知道。react跟storybook都试图提供一种另配置的项目初始化方案，希望
+  一个简单的=init=就能解决问题。这样的愿景固然是好的，但是现实的情况却是复杂的。storybook并没有针对react-native-web的preset，我参照一些blog的方法
+  一步一步配置好之后，得到的却是各种load、babel、modules not found之类的错误。
+
+  这时候我该怎么办？只把配置的options都读一遍，看看是不是哪里多了或者少了。但是storybook的配置项几乎为零，试来试去都不成功，简直好无头绪。最后，我
+  是通过在一个完全新的项目里，再把之前的几种试错方案又试了一遍，才找到一种成功的配置方案。那么为什么原来的项目里不work？不知道。真正的原因埋在一通
+  乱七八糟的报错信息背后。
+
+  一个工具提供零配置方案固然好，但是代价就是一旦出了问题，我们就不知所措。我感觉好的工具，最好是提供几个简单的概念（接口），然后通过这些概念进行编程
+  组合。以build工具为例，我更喜欢gulp这类编程风格的工具，而不是webpack这种配置项风格的工具。
+
+  我感觉对我而言，终极是要打开build工具的黑盒。
+
+  
