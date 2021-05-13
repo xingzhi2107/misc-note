@@ -810,4 +810,9 @@ topEnv['objectGetApply'] = function (ctx, obj, key, ...args) {
 
   我感觉对我而言，终极是要打开build工具的黑盒。
 
+
+  继续昨天的吐槽。虽然不喜欢webpack，但是相比较create-react-app这类对webpack二次封装之后的工具，我感觉还是直接用webpack比较好。正如昨天所想的那样，这个
+  黑盒终极是要打开，要去熟悉webpack的机制，常用的插件，甚至要打开webpack的源码。或许这样之后，能弄出一个编程配置风格的webpack。所以，从现在开始维护自己
+  的webpack template吧！
+
   
