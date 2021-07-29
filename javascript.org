@@ -129,35 +129,35 @@
     js中，几乎所有的对象都继承自Object，所以Object的API几乎适用于所有对象
 
 
-    |          |                  |                                                  | <30>                           |
-    | 分类     | 子类             | API                                              | 作用                           |
-    |----------+------------------+--------------------------------------------------+--------------------------------|
-    |          |                  | Object.getPrototypeOf(obj)                       | 获取obj的原型                  |
-    | 原型操作 |                  | Object.setPrototypeOf(obj, protoObj)             | 指定obj的原型                  |
-    |          |                  | Object.create(protoObj [,propritesDefineDesc])   | 以protoObj为原型创建对象       |
-    |----------+------------------+--------------------------------------------------+--------------------------------|
-    |          | self             | obj.hasOwnproperty(propName)                     |                                |
-    |          | self, enumerable | Object.keys(obj)                                 |                                |
-    | 属性读取 | self, enumerable | Object.values(obj)                               |                                |
-    |          | self, enumerable | Object.entries(obj)                              |                                |
-    |          | self, enumerable | Object.assign(target, src1, src2...)             |                                |
-    |          | enumerable       | for...in                                         |                                |
-    |          | self, no Symbols | Object.getOwnPropertyNames(obj)                  |                                |
-    |          | self, symbols    | Object.getOwnPropertySymbols(obj)                |                                |
-    |----------+------------------+--------------------------------------------------+--------------------------------|
-    | 属性创建 |                  | Object.defineProperty(obj, propName, defineDesc) |                                |
-    |          |                  | Object.defineProperties(obj, defineDescs)        |                                |
-    |----------+------------------+--------------------------------------------------+--------------------------------|
-    | 属性描述 |                  | Object.getOwnPropertyDescriptor(obj, propName)   | 获取属性的*描述*               |
-    |          |                  | Object.getOwnPropertyDescriptors(obj)            |                                |
-    |----------+------------------+--------------------------------------------------+--------------------------------|
-    | 对象约束 |                  | Object.preventExtensions(obj)                    | 不能新增属性                   |
-    |          |                  | Object.seal(obj)                                 | 不能新增属性，不能改已有属性config |
+    |          |                  |                                                  | <30>                                                |
+    | 分类     | 子类             | API                                              | 作用                                                |
+    |----------+------------------+--------------------------------------------------+-----------------------------------------------------|
+    |          |                  | Object.getPrototypeOf(obj)                       | 获取obj的原型                                       |
+    | 原型操作 |                  | Object.setPrototypeOf(obj, protoObj)             | 指定obj的原型                                       |
+    |          |                  | Object.create(protoObj [,propritesDefineDesc])   | 以protoObj为原型创建对象                            |
+    |----------+------------------+--------------------------------------------------+-----------------------------------------------------|
+    |          | self             | obj.hasOwnproperty(propName)                     |                                                     |
+    |          | self, enumerable | Object.keys(obj)                                 |                                                     |
+    | 属性读取 | self, enumerable | Object.values(obj)                               |                                                     |
+    |          | self, enumerable | Object.entries(obj)                              |                                                     |
+    |          | self, enumerable | Object.assign(target, src1, src2...)             |                                                     |
+    |          | enumerable       | for...in                                         |                                                     |
+    |          | self, no Symbols | Object.getOwnPropertyNames(obj)                  |                                                     |
+    |          | self, symbols    | Object.getOwnPropertySymbols(obj)                |                                                     |
+    |----------+------------------+--------------------------------------------------+-----------------------------------------------------|
+    | 属性创建 |                  | Object.defineProperty(obj, propName, defineDesc) |                                                     |
+    |          |                  | Object.defineProperties(obj, defineDescs)        |                                                     |
+    |----------+------------------+--------------------------------------------------+-----------------------------------------------------|
+    | 属性描述 |                  | Object.getOwnPropertyDescriptor(obj, propName)   | 获取属性的*描述*                                    |
+    |          |                  | Object.getOwnPropertyDescriptors(obj)            |                                                     |
+    |----------+------------------+--------------------------------------------------+-----------------------------------------------------|
+    | 对象约束 |                  | Object.preventExtensions(obj)                    | 不能新增属性                                        |
+    |          |                  | Object.seal(obj)                                 | 不能新增属性，不能改已有属性config                  |
     |          |                  | Object.freeze(obj)                               | 不能新增/删除属性，不能改已有属性config，不能改原型 |
-    |          |                  | Object.isExtensions(obj)                         |                                |
-    |          |                  | Object.isSeal(obj)                               |                                |
-    |          |                  | Object.isFreeze(obj)                             |                                |
-    |----------+------------------+--------------------------------------------------+--------------------------------|
+    |          |                  | Object.isExtensions(obj)                         |                                                     |
+    |          |                  | Object.isSeal(obj)                               |                                                     |
+    |          |                  | Object.isFreeze(obj)                             |                                                     |
+    |----------+------------------+--------------------------------------------------+-----------------------------------------------------|
     - 获取当前对象的原型 :: Object.getPrototypeOf()
     - 设置当前对象的原型 :: Object.setPrototypeOf()
 
@@ -815,4 +815,13 @@ topEnv['objectGetApply'] = function (ctx, obj, key, ...args) {
   黑盒终极是要打开，要去熟悉webpack的机制，常用的插件，甚至要打开webpack的源码。或许这样之后，能弄出一个编程配置风格的webpack。所以，从现在开始维护自己
   的webpack template吧！
 
+
+* 发现mobx与反思
+  redux这个东西真的是难用得不行，现在一写到要跟redux打交道得代码就很烦躁。
+
+  - 没有computed机制，还要套一个selectjs才能实现。
+  - 只能订阅整棵状态树。这意味着性能差，并且导致selectjs的写法非常的傻缺。
   
+  上网吐槽之际，才去想着看看别的解决方案，才发现mobx就很完美嘛（目前而言）！
+
+  不过重点不是发现mobx，重点是为什么看过那么多次mobx这个词，自己就没想着稍微深入的了解一下呢？那种“对框架疲惫”的心态真的是毒瘤！勇于探索新事物，尝试新事物，面对槽点勇于发声，不然类似的事情会在发生，自己离被淘汰也就不远了。
