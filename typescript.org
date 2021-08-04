@@ -21,3 +21,10 @@ type TheMapYouWant = {
   [key: Modes]: string; // 假设value类型是string
 }
   #+END_SRC
+
+
+* 如何简化react hoc函数的类型？
+  今天研究了下怎么集成mobx，发现hoc还是比较好写的。第三方自带的hoc往往都非常的复杂，以至于有时候没有办法正常的使用，抑或会有类型丢失或者性能问题。
+  在集成mobx的时候，我显示参照之前写的一个hoc写的。但是发现并不完美，需要手动提供Props跟InjectProps，我之前也是这么用的，但是这次想优化一下。于是就参照jss的withStyles写了一个版本。虽然解决了前面的问题，但是发现性能变差了，以至于调用组件的地方没办法自动补全OwnProps。我一开始以为是我抄得有问题，但是很快发现是withStyles的那种写法只要有两个hoc连着用，性能就非常差。
+  我决定简化hoc的类型说明。其实hoc就是给组件注入一些props，我称之为InjectProps。只不过这些props有的是动态的，有的则是固定的。所以hoc的类型输入就是任意的组件=Com<Props>=，经过hoc作用之后，得到一个新的组件=Wrapped<Omit<Props, InjectProps>>=，这个新的组件就不需要再传入InjectProps了。基于此，我写了两个简单的hoc包装函数，这样用起来就非常的舒服，不用提供Props跟InjectProps，同时性能也不错。
+  具体代码参见这个[[https://github.com/xingzhi2107/opassword/commit/4f7abaab59bd3d03d8e64edc8a942d7ea5208bad][commit]]。
