@@ -722,3 +722,7 @@ float、overflow不为visible、绝对对应元素等等，详见[[https://devel
 
   这里有个点要注意：offsetTop是不会以=transform=之后的位置为准的，所以如果你发现得到的=offsetTop=不“准确”，那你要看看元素是不是被=transform=了。
 
+
+* cool websites
+  - https://poolsuite.net/
+  - https://ready.so/

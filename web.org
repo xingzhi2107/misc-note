@@ -1,0 +1,4 @@
+#+TITLE: Web
+
+* 防御点击拦截攻击
+  今天收到安全提醒邮件，警告我们的网站没有设置X-IFRAME-OPTIONS Header，存在点击拦截攻击的风险。这篇[[https://zh.javascript.info/clickjacking][博客]]介绍得很全面。
