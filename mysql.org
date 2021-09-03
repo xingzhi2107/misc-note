@@ -4,3 +4,15 @@
 * change primary key
   1. =ALTER TABLE tbl DROP PRIMARY KEY=
   2. =ALTER TABLE tbl MODIFY fid ... PRIMARY KEY=
+
+
+* formate timestamp to date
+  https://stackoverflow.com/a/12629932
+  #+begin_src mysql
+  SELECT
+  DATE_FORMATE(FROM_UNIXTIME(time_created)) AS time_created_date
+  FROM Table1
+  #+end_src
+
+* mysql cross db join
+  mysql跨db join表，只需要给table加上db的前缀就可以了
