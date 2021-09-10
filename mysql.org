@@ -23,3 +23,33 @@
 
 * 索引的作用
   索引的作用当然是加快query的速度。索引在where、order by都能起到作用。
+
+* 临时表
+  由于开发的功能还未上线，所以数据仓库也没有新功能新增的表及其数据。现在需要对数据做一些简单的统计，但是因为数据分库这个过程变得繁琐无比。临时表能一定程度上化解这种繁琐。
+
+  大致过程是：
+  1. 创建表
+  2. 插入数据
+  3. 清理临时表
+
+  创建跟清理表，其实用CREATE TABLE跟DROP TABLE就行了，这里不多介绍。插入数据需要用到INSERT INTO ... SELECT语句，如：
+  #+begin_src mysql
+  INSERT INTO TmpTable1 SELECT name, age FROM student LIMIT 10;
+  #+end_src
+
+** 真正的的临时表
+   mysql还提供一种真正的临时表，在session结束后会自动清理。其语法也很简单，就是把=CREATE TABLE=语句换成=CREATE TEMPORARY TABLE=，如：
+   #+name: 创建临时表1 -- 基本用法
+   #+begin_src mysql
+   CREATE TEMPORARY TABLE TmpTable1 (
+     `age` INT(8) UNSIGNED NOT NULL,
+     `name` VARCHAR(255) NOT NULL,
+   )
+   #+end_src
+
+   因为是临时表，基本都没什么讲究，什么主键、外键、索引基本都不需要。所以，mysql还提供一种快速建表的方式，直接通过select的结果自动建表同时导入select的结果，如：
+   #+name: 创建临时表 -- 通过select结果自动建表并插入数据
+   #+begin_src mysql
+   CREATE TEMPORARY TABLE TmpTable1 SELECT age, name FROM student LIMIT 10;
+   #+end_src
+   
