@@ -16,3 +16,10 @@
 
 * mysql cross db join
   mysql跨db join表，只需要给table加上db的前缀就可以了
+
+
+* 分析select性能
+  在select前面加上explain就可以看到很多性能信息。
+
+* 索引的作用
+  索引的作用当然是加快query的速度。索引在where、order by都能起到作用。
