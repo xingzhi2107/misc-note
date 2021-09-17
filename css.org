@@ -726,3 +726,6 @@ float、overflow不为visible、绝对对应元素等等，详见[[https://devel
 * cool websites
   - https://poolsuite.net/
   - https://ready.so/
+
+* css :is()
+  继css变量之后，css又提供了自己原生的继承方案 -- [[https://developer.mozilla.org/en-US/docs/Web/CSS/:is][:is()]]
