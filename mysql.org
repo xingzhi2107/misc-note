@@ -53,3 +53,40 @@
    CREATE TEMPORARY TABLE TmpTable1 SELECT age, name FROM student LIMIT 10;
    #+end_src
    
+* having与group by的使用
+  平时不太需要用到sql，用到了也是简单的select/join，很久才会用一两次having与group by。这就让我很苦恼，每次用到的时候都生分了，又要查一下example。
+  今天特意开此section，用来记录一些基本知识点与写过的sql作为example，方便下一次生分的时候查阅回忆。
+
+  [[https://www.mysqltutorial.org/mysql-having.aspx][这篇教程]]应该是最完整的。以此，简单做些笔记。
+
+  注意点：
+  1. where跟having的相同点、不同点
+  2. 它们的执行顺序是什么？
+  3. group by的作用是什么？
+
+  明白了这些点，就够了。
+
+  #+begin_src mysql
+SELECT 
+    select_list
+FROM 
+    table_name
+WHERE 
+    search_condition
+GROUP BY 
+    group_by_expression
+HAVING 
+    group_condition;
+  #+end_src
+
+  简单来讲，一句带有group by/having的简单query sql，有如下过程：
+  1. From :: 从表里取出原始数据
+  2. Where :: 通过Where的条件过滤原始数据
+  3. Group by :: 根据group by的表达式，对原始数据进行group聚合
+  4. Having :: 对聚合后的数据，再根据Having的条件进行过滤。这是第二次过滤，是对聚合后的数据的过滤。
+  5. Order by/Limit :: 最后再对数据进行排序分页。
+
+* 案例
+** 每个group最xx的数据
+   [[https://stackoverflow.com/questions/8748986/get-records-with-highest-smallest-whatever-per-group/8749095#8749095][Get records with highest/smallest <whatever> per group]]
+   这篇文章让我对join陷入了沉思，值得再学习join。不过出于可阅读性考虑，我还是分别取出用户信息、怀孕信息，然后用代码在内存里判断每个用户是否是近期流产的用户。
