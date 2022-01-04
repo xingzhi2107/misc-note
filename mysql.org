@@ -90,3 +90,21 @@ HAVING
 ** 每个group最xx的数据
    [[https://stackoverflow.com/questions/8748986/get-records-with-highest-smallest-whatever-per-group/8749095#8749095][Get records with highest/smallest <whatever> per group]]
    这篇文章让我对join陷入了沉思，值得再学习join。不过出于可阅读性考虑，我还是分别取出用户信息、怀孕信息，然后用代码在内存里判断每个用户是否是近期流产的用户。
+
+   --------------------------- 2022-01-04 06:33:10 ---------------------------
+   因为需要，所以今天又探索了一番。我感觉[[https://stackoverflow.com/questions/2739474/how-to-select-the-first-row-for-each-group-in-mysql#answer-2739528][这个回答]]的方法最好理解。简单描述：
+     1. 先通过group的函数（基本是min或者max）找到每个group的目标id
+     2. 再通过步骤1.获取的ids来获取最终想要的结果。
+        
+   案例分析：要获取每个用户最近一单订单的订单状态。对应的SQL是这样写的：
+   #+begin_src mysql
+   SELECT user_id, status, orderDate FROM orders WHERE id IN (
+      SELECT max(id) FROM orders GROUP BY user_id
+   );
+   #+end_src
+
+   这里其实有一个很重要的前提，那就是id要能比较大小，并且大id的创建时间比小id的新。
+
+
+   
+   
