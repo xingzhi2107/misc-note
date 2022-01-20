@@ -28,3 +28,29 @@ type TheMapYouWant = {
   在集成mobx的时候，我显示参照之前写的一个hoc写的。但是发现并不完美，需要手动提供Props跟InjectProps，我之前也是这么用的，但是这次想优化一下。于是就参照jss的withStyles写了一个版本。虽然解决了前面的问题，但是发现性能变差了，以至于调用组件的地方没办法自动补全OwnProps。我一开始以为是我抄得有问题，但是很快发现是withStyles的那种写法只要有两个hoc连着用，性能就非常差。
   我决定简化hoc的类型说明。其实hoc就是给组件注入一些props，我称之为InjectProps。只不过这些props有的是动态的，有的则是固定的。所以hoc的类型输入就是任意的组件=Com<Props>=，经过hoc作用之后，得到一个新的组件=Wrapped<Omit<Props, InjectProps>>=，这个新的组件就不需要再传入InjectProps了。基于此，我写了两个简单的hoc包装函数，这样用起来就非常的舒服，不用提供Props跟InjectProps，同时性能也不错。
   具体代码参见这个[[https://github.com/xingzhi2107/opassword/commit/4f7abaab59bd3d03d8e64edc8a942d7ea5208bad][commit]]。
+
+* Record的高级用法
+  用jss的时候，经常会苦恼class的prop提示跟styles的提示无法兼得。看了[[https://stackoverflow.com/questions/49538199/is-it-possible-to-infer-the-keys-of-a-record-in-typescript][这篇]]问答之后，豁然开朗！真是神器。
+  
+  #+begin_src typescript
+function createStyles<T extends Styles>(cfg: T) {
+  return cfg;
+}
+
+const styles = createStyles({
+  footer: {
+    borderTop: [1, 'solid', '#eee'],
+    height: 50,
+    textAlign: 'center',
+  },
+});
+
+class PageFooter extends PureComponent<Props, State> {
+  render() {
+    const { classes } = this.props;
+    return <Footer className={classes.footer}>{'Glow AdminDash'}</Footer>;
+  }
+}
+  #+end_src
+
+  用了createStyles这个helper函数之后，footer里面的key是类型完整的，而且classes.footer也是类型完整的。
