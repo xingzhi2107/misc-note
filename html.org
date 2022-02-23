@@ -116,3 +116,11 @@
      <label for="id">Male</label>
      <input name="sex" type="radio" id="sex"/>
   #+END_SRC
+
+* script标签的async与defer
+  [[https://stackoverflow.com/questions/10808109/script-tag-async-defer][这篇QA]]写得非常好了，形象易懂。
+
+* 一些比较常用的meta标签
+  - viewport :: 用来配置mobile设备下，页面如何缩放
+  - og :: 全称open graph，一般定义页面的标题、描述、图片，帮助第三方把当前网页链接渲染成漂亮的卡片。类似的协议还有twitter
+  - robots :: 给搜索引擎爬虫提供元信息。告诉爬虫本网站是否希望被收录等信息。
