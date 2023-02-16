@@ -293,7 +293,6 @@
   - window.onpopstate监听“前进”、“后退”的路由变化方式
   - 自己封装函数，当调用pushState的时候，也调用一下路由变化的监听函数。这也是为什么vue-router之类的函数监听不到你自己裸调用的pushState、replaceState的原因。我之前傻傻的，一直卡在这里，希望onpopstate能监听到这两个函数的调用，其实就是自己调用的时候，触发一下onpopstate的handler就好了嘛。
 
-
 * 单元测试仿真库 -- sinonjs
   之前用的是testdouble（测试替身），有了上次的经验后，这次使用sinonjs就比较顺畅了。对Fake、Spy、Stub、Mock也有了新的理解。
 

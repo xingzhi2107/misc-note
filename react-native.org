@@ -1,0 +1,34 @@
+#+TITLE: React Native
+
+
+* absolute与zIndex与elevation
+  安卓平台下，elevation会影响z轴布局
+  
+  https://gongchenghuigch.github.io/2018/11/10/rnAndroidPosition/
+
+* ScrollView总结 
+** 滚动到某个元素的位置
+   实现的思路：
+   1. 获取目标元素T在scroll里的位置P
+   2. 控制scroll滚动到P
+
+   需要用到的API：
+   measure [ˈmeʒə(r)] 系列API，用来测量T在scroll里的位置
+
+** measure系列API
+
+   measure系列API有三个，都是可以测量元素的尺寸和位置。这些接口在获取尺寸上没有，没有任何区别，所以这里只关注位置上的区别。
+   
+   | API             | 位置作用                          | 具体数值                                                |
+   |-----------------+-----------------------------------+---------------------------------------------------------|
+   | measure         | 测量元素在RN Page和在父元素的位置 | x, y表示在父元素的位置，pageX, pageY表示在RN Page的位置 |
+   | measureInWindow | 测量元素在Native屏幕中的位置      | x, y表示在Native屏幕中的位置，即便元素已经超过屏幕范围  |
+   | measureLayout   | 测量元素在某个父辈元素的位置      | left, top表示在这个父辈元素中的位置                     |
+
+   RN Page与Native 屏幕有什么区别？举例说明：当一个RN Page嵌套在一个Native页面里的时候，比如，嵌套在一个Native页面的下半部，那么这时候用
+   去测量RN 页面里最上面的一个元素的位置的时候：
+
+   + measure 测量出来的pageX, pageY都会是0。虽然它的起始位置在整个屏幕的中间，但是它相对整个RN容器的位置就是0。
+   + measureInWindow 测量出来的x=0，y则应该是屏高的一半。
+
+   
