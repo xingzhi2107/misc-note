@@ -1,0 +1,6 @@
+#+TITLE: Grafana
+
+
+* 实践：PromQL分析ttc-plan-reminder的性能问题
+分析之前，其实性能问题已经被解决了。主要的性能问题就是
+用Prometheus给ttc-plan-reminder
