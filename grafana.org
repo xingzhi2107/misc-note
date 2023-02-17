@@ -2,3 +2,42 @@
 
 
 * 实践：PromQL分析ttc-plan-reminder的性能问题
+  分析之前，其实性能问题已经被解决了，所以分析起来有点鸡肋。不过作为一次入门实践记录也不错。
+
+
+  需求：
+  - 查看task的触发数量是否异常
+  - 整个task的各个阶段，有没有特别耗性能的步骤
+
+  整个task的过程：
+  1. 用户sync数据后，如果修改到月经的数据会触发task
+  2. 判断用户是否需要执行task。这是一系列简单的判断，预期会过滤掉大部分用户。
+  3. 取出用户的月经数据、预测数据，然后计算出reminder的日历安排
+
+  根据费时的io操作，简单打点：
+  - 整个步骤2的耗时
+  - 整个步骤3的耗时
+  - 步骤3-取月经数据的耗时
+  - 步骤3-取预测数据的耗时
+
+  建图表：
+  - 查看总的触发数量
+#+begin_quote
+    sum(emma_webrpc_apm_count{target="ttc-plan-reminder-worker"}) by (segment) 
+#+end_quote
+   count操作是统计数量。整句话的意思也就是把target='ttc-plan-reminder-worker'的emm_webrpc_apm的count（数量）进行sum（加总），然后按segment进行分组（其实是先按segment分组）
+
+  - 查看各个阶段的耗时rate
+#+begin_quote
+    sum(rate(emma_webrpc_apm_sum{target="ttc-plan-reminder-worker"})[5m]) by (segment)
+#+end_quote
+   sum操作是加总数值，这里的数值是“耗时”。整句的含义是：
+   a. 取出target=ttc-plan-reinder-worker的emma_webrpc_apm数据
+   b. 按segment对数据进行分组
+   c. 每一组数据，再按5分钟一组进行分组，然后加总数值“耗时”除以5minute，得出rate
+
+
+  结果：
+  - 性能问题已经解决，看不出有什么猫腻。如果要看触发数量是否有异常，比如一个用户是不是会频繁？则需要记log
+  - “步骤3-取预测数据”这个步骤是最耗时的，但是看着耗时应该还算好，没有特别的性能问题
+  - 大部分任务确实在步骤2就被拦截了
