@@ -190,3 +190,4 @@ HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 
   然后把后续用到user_original_pool的地方，替换成zhenguo.tmp_2302_extend_global_sale_user。
    
+*** 
