@@ -173,7 +173,6 @@ HINT:  Use DROP ... CASCADE to drop the dependent objects too.
    整个sql的整理分析过程，基本是从上到下的。越到后面，前面的sql几乎都不需要再改。这种情况下，只要确定了其中一个子sql，其实就可以建临时表来优化整个查询过程。否则，每次有个小改动重跑的整个过程耗时都要接近1分钟。当然了，如果整个sql的执行在15秒以内，我觉得大概没太大必要建中间表。
 
 ** 优化过程
-*** user_original_pool
   user_original_pool的sql大概执行一次就要20s，很值得建立中间表。
 
   创建中间表：
@@ -189,4 +188,10 @@ HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 #+end_src
 
   然后把后续用到user_original_pool的地方，替换成zhenguo.tmp_2302_extend_global_sale_user。
-   
+
+  active_user这个sql一次大概需要16s，还算值得建立中间表，重复上诉过程。其它sql不太值得去优化。
+
+  最终结果：优化前，整个sql需要45s+，优化后大约只需要16s。再这个基础上继续调试sql，就不会那么痛苦了！
+
+  后续可以把建立临时表的过程，变成脚本之类的，方便及时删除所有临时表，或者重建临时表。
+  
