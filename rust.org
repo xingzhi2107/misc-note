@@ -25,3 +25,82 @@
   请教：
   1. 如何实现？
   2. 如果按每次从文件读出，改完写回的方式。那rust的高性能优势又能有多少？
+
+** v1感想
+  第一版的实现方案真的不像一个rust程序——完全没有考虑开销问题。每个写操作，都会发生一次文件的读与写，类似这样：
+  #+begin_src rust
+    fn set_complete(id: u32, complete: bool) {
+        let mut todos = Todo::load_todos();
+
+        todos.iter_mut().for_each(|item| {
+            if item.id == id {
+                item.complete = complete
+            }
+        });
+
+        Todo::save_todos(&todos);
+    }
+#+end_src
+
+  
+
+  另外，感觉单单会immumteable、mutable、referance、ownership、lifetime是写不出来一个todo list的。
+  在实现edit/complete/incomplete等编辑操作的时候，大概会用到 ~iter_mut~ 接口。如果只知道 ~iter~ ，那大概要写成先找到目标task的index，然后通过index来修改task。
+  #+begin_src rust
+      pub fn edit_todo(id: u32, title: &str) {
+        let mut todos = Todo::load_todos();
+
+        todos.iter_mut().for_each(|item| {
+            if item.id == id {
+                item.title = String::from(title)
+            }
+        });
+
+        Todo::save_todos(&todos);
+    }
+#+end_src
+
+  在实现remove的时候，大概会用到 ~iter_into~ 接口（当然了，我后来知道了vector有一个 ~remove~ 接口）。不然想写出类似 ~let new_todos = todos.iter().filter().collect()~ 的时候，就会发现你的new_todos其实是一个 ~&Vec<Todo>~ 类型。
+  #+begin_src rust
+      pub fn remove_todo(id: u32) {
+        let todos = Todo::load_todos().into_iter()
+            .filter(|item| item.id != id)
+            .collect::<Vec<Todo>>();
+        Todo::save_todos(&todos);
+    }
+#+end_src
+
+  在实现command的时候，想用“命令模式”跟“决策链”模式来处理输入。这个也小折腾了一会，简单的学习了智能指针总算搞定了。当然了，最终结果还是比较丑陋的。
+  #+begin_src rust
+  pub fn deal_input(input: &str) {
+    let commands: Vec<Box<dyn Command>> = vec![  // 智能指针Box
+        Box::new(HelpCommand {}),
+        Box::new(ListCommand {}),
+        Box::new(AddCommand {}),
+        Box::new(EditCommand {}),
+        Box::new(CompleteCommand {}),
+        Box::new(IncompleteCommand {}),
+        Box::new(RemoveCommand {}),
+        Box::new(QuitCommand {}),
+    ];
+    let input = input.trim();
+    for cmd in commands.iter() {
+        let is_hint = cmd.match_command(input);
+        if is_hint {
+            cmd.exec_command(input);
+            return
+        }
+    }
+    panic!("Invalid input");
+}
+
+#+end_src
+
+  不过总得来说，这个小小的实践还是驱动了自己去了解更多的rust知识。我感觉官方的example有点简单了，在lifetime之前，可以插入一章实践项目章节，来介绍一些常用的接口。
+
+
+* 智能指针
+
+* 常用的iter接口
+** iter
+** vector特有
