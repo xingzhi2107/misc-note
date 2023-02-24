@@ -41,16 +41,40 @@
   - 申请之后，onPanResponderGrant/onPanResponderReject 是申请的结果回调，表示成功或失败。
   - 如果申请成功，那么View就能通过回调onPanResponderMove被通知到手势的Move情况
   - 正常情况下，手势结束阶段会分别触发onPanResponderRelease与onPanResponderEnd两个回调，分别表示 =手势释放= 与 =手势结束=
-  - 有些情况下，还会触发onResponderTerminationRequest跟onPanResponderRequestTerminal。按文档来说，是指当前View的正在响应当前的手势，这时另一个View也申请成为手势的响应者，则系统会调用onResponderTerminalRequest来询问当前View是否愿意放弃响应当前手势（因为一个手势，同时只能有一个响应者）
 
+** 无法想到触发场景的
+  有些情况下，还会触发onResponderTerminationRequest跟onPanResponderRequestTerminal。
+
+  按文档来说，是指当前View的正在响应当前的手势，这时另一个View也申请成为手势的响应者，则系统会调用onResponderTerminalRequest来询问当前View是否愿意放弃响应当前手势（因为一个手势，同时只能有一个响应者），如果同意就返回true，然后系统会调用onPanResponderRequestTerminal来通知当前View。
+  
+  但是，这个我怎么都没法触发！无论两个View的关系是父子关系、还是兄弟关系、还是叔侄关系，都没办法触发Request。这个留待未来解答吧！
 ** 误区一：事件可以继续往后传递
   以前写web，处理web事件的时候可以调用 ~event.stopPropagation()~ 来阻止事件继续传播。但是手势事件里，貌似没有决定要不要继续传播的接口。
   现在想想这种接口肯定是没有的。因为手势事件其实是一个系列的事件，你不能已经响应了n个事件后才决定放弃响应，然后想把响应权交给其它元素。
 
-** 大一统的“捕获冒泡”事件传播机制
-  总体而言，无论是桌面操作系统、Web、iOS还是Android，其大部分事件类型的传播机制都符合“捕获
+  当然，根据后来瞄了一眼ios的事件机制的文章来讲，这可能只是RN没封装而已，实际上ios可能是支持的。
 
-[[file:javascript.org::*DOM事件模型][DOM事件模型]]
-  [[id:1F8BD8E8-31EF-4361-8673-F68C309FA4C0][DOM事件模型]]
+** 大一统的“捕获冒泡”事件传播机制
+  总体而言，无论是桌面操作系统、Web、iOS还是Android，其大部分事件类型的传播机制都符合“捕获冒泡”的转播方式。可以重温下[[file:javascript.org::*DOM事件模型][DOM事件模型]]  
+
+  不过这里有一个注意点要特别注意，这个传播路径差不多（ios貌似可以重写这个路径）是 =目标元素= 所在的渲染树路径！它不会沿着兄弟结点、叔侄结点进行传播。
 
 ** 现实例子：如何解决上述的轮播组件问题？
+  我一开始寻求一种事件往后传递的方案来解决这个问题。因为我以为是轮播图组件把内容元素的事件拦截了，但这其实一开始思路就错误了。
+
+  经过重温事件相关的知识之后，我重新回望轮播图组件的实现方式，最终发现了症结所在。这里先描述一下组件的渲染结构：
+
+  - 设轮播的内容元素中的那个Button为 =target el=，因为touch事件是作用在它上面的；
+  - 每一页轮播图都有一个wrapper元素，就设为 =wrapper el=。可见 =target el= 跟 =wrapper el=是祖孙关系，属于“直系亲属”；
+  - 当时，还有一个mask元素，用来承载响应用户手势，从而让用户手动控制轮播进度，设为 =mask el=。显然，=mask el= 与其它两个元素都没有直系亲属关系。
+
+  以上就是描述这个问题的主要结构，其它一些元素不是很重要，不多描述。
+
+  问题的症结在于那个 =mask el= ，它承载了响应用户手势，Z-index层面又在其它元素之上，但跟轮播的内容又不是直系亲属关系。请问，即便有所谓的“继续传递”机制，又有什么用？ =target el= 的事件既不是被拦截、也不是被屏蔽！是压根就没发生在它身上！
+
+  解决方案也很简单：
+  - 移除 =mask el= ，把手势响应放在 =wrapper el= 上，这样用户在点击 =target el= 的时候，事件就真的发生在它身上；
+  - 移除onStartShouldSetPanResponderCapture跟onMoveShouldSetPanResponderCapture，不要在捕获阶段去响应手势。当时这两个属性多半是一股脑全写上去的。
+  
+** 未解答的疑惑？
+  - ios 15开始支持的popup窗口，是可以下拉关闭的。那么ios是如何做到让窗口、与轮播图这两个View都能响应同一个手势的呢？准备的说是，在一个手势周期内，上下滑动的时候，窗口会屏蔽轮播图响应。
