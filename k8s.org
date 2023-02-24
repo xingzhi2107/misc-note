@@ -1,11 +1,9 @@
 #+TITLE: K8S
 
 * 一些基本概念
-
-** Cluster
-   - Control plane
-   - 
-
+** k8s components
+*** Cluster
+   一个k8s“实例”就是一个cluster（集群）。所谓集群就是k8s服务的一个集合，涉及node（节点）、newtork等资源。显然，这是云服务商所需要提供的一个服务，例如Amazon EKS，AliCloud ACk。当然在本地学习的时候，则可以通过kind或者k3s等工具来创建一个cluster。
 
 * logs命令
 ** 查看某个container的logs
