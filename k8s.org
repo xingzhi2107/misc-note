@@ -3,7 +3,17 @@
 * 一些基本概念
 ** k8s components
 *** Cluster
-   一个k8s“实例”就是一个cluster（集群）。所谓集群就是k8s服务的一个集合，涉及node（节点）、newtork等资源。显然，这是云服务商所需要提供的一个服务，例如Amazon EKS，AliCloud ACk。当然在本地学习的时候，则可以通过kind或者k3s等工具来创建一个cluster。
+一个k8s“实例”就是一个cluster（集群）。所谓集群就是k8s服务的一个集合，涉及nodes（节点）、control plane（控制中心）等资源。显然，这是云服务商所需要提供的一个服务，例如Amazon EKS，AliCloud ACk。当然在本地学习的时候，则可以通过kind或者k3s等工具来创建一个cluster。
+
+*** Control Plane
+控制平面。负责整个集群的控制。由很多个组件构成。k8s一般会单独分配一台机器来专门运行整个control plane.
+   
+*** Nodes
+节点。表示一台抽象服务器，无论是物理机还是虚拟机。
+
+一个节点可以运行多个pods。
+
+每个节点都是受Control Plane的管理。每个节点上都运行着一个kubelet，用来跟Control Plane通讯。还运行着一个容器运行时服务，例如docker。
 
 * logs命令
 ** 查看某个container的logs
