@@ -98,9 +98,21 @@
 
   不过总得来说，这个小小的实践还是驱动了自己去了解更多的rust知识。我感觉官方的example有点简单了，在lifetime之前，可以插入一章实践项目章节，来介绍一些常用的接口。
 
+** v2
+  已经实现了一个基本版之后，我准备增加一个 =save= 命令进行保存修改，之前的add、edit等写操作都要执行save才会生效。
 
 * 智能指针
 
 * 常用的iter接口
 ** iter
+ | api       | note |
+ |-----------+------|
+ | iter      |      |
+ | into_iter |      |
+ | iter_mut  |      |
+ | collect   |      |
+ | map       |      |
+ | filter    |      |
+
+
 ** vector特有
