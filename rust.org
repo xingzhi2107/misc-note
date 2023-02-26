@@ -27,6 +27,7 @@
   2. 如果按每次从文件读出，改完写回的方式。那rust的高性能优势又能有多少？
 
 ** v1感想
+  最终代码见：[[https://github.com/xingzhi2107/rust-example-todo/releases/tag/v1][tag-v1]]
   第一版的实现方案真的不像一个rust程序——完全没有考虑开销问题。每个写操作，都会发生一次文件的读与写，类似这样：
   #+begin_src rust
     fn set_complete(id: u32, complete: bool) {
@@ -98,8 +99,14 @@
 
   不过总得来说，这个小小的实践还是驱动了自己去了解更多的rust知识。我感觉官方的example有点简单了，在lifetime之前，可以插入一章实践项目章节，来介绍一些常用的接口。
 
-** v2
-  已经实现了一个基本版之后，我准备增加一个 =save= 命令进行保存修改，之前的add、edit等写操作都要执行save才会生效。
+** v2 - 失败的尝试1
+  最终代码见：[[https://github.com/xingzhi2107/rust-example-todo/releases/tag/v2-f1][v2-f1]]
+  已经实现了一个基本版之后，我准备增加一个 =save= 命令进行保存修改，之前的add、edit等写操作都要执行save才会生效。但是用面向对象
+  的思路来写，却发现怎么都有问题。整个todo_app接口体必须是mut的，但这样就无法赋值给多个command实例，从而无法实现命令模式+决策链。
+  难道要把每个command里的todo_app用 =Ref= 智能指针套起来吗？我暂时不是很愿意。
+  
+  
+
 
 * 智能指针
 
