@@ -31,3 +31,100 @@
 ** 博客书籍
 *** 博客：[[https://betterprogramming.pub/a-useful-framework-for-naming-your-classes-functions-and-variables-e7d186e3189f][A Useful Framework for Naming Your Classes, Functions, and Variables]]
     干货文章
+
+** 实践流水账：清理premium page的plan数据逻辑
+*** 背景介绍
+
+Premium这个页面大概有4千多行的代码，整体功能分两大块：
+
+1. 渲染页面内容
+2. 渲染底部的plan按钮
+
+按现在的视角来看，两部分是可以完全分割开来的。之前曾经抽离了一次底部的plan按钮到新组件 =BottomPlanPanel= 上，但其实数据流并没有完全跟着抽离走。这次因为需要在别的页面也渲染一个BottomPlanPanel，所以需要再进一步把这里的逻辑抽丝剥茧的迁移出来。
+
+
+*** 大概思路
+  为了不破坏现有的PremiumPage逻辑，决定完全保留现有的BottomPlanPanel接口不变，另外实现一个Adaptor组件来处理“API -> BottomPlanPanel”的逻辑。往后再慢慢全部替换成这个Adaptor组件，再往后再把两个组件合并。
+
+
+*** 阅读理解原有逻辑
+后面有 ~fetchPremiumConfig~ 函数的代码，非个人代码所以加密了。整个函数总共253行，主要内容有：
+  1. 取出config的一些字段，再重新命名。这里估计是因为config的字段太多了，大约有25个。所以当时为了便利性，把它展平到state上。接下来bottom plan需要用到的字段其实大概就5~6个。
+  2. 确定使用哪一套plans作为active plans。总共有两套plans，一套是作为备选用的。
+  3. 跟Store请求这些active plans在当前的国家或地区的价格是多少。这是一个很明显需要剥离出去的异步请求，放在fetchPremiumConfig里名不符实。
+  4. 衍化计算出一些特殊的逻辑，以备后用。如年付的价格、买断的价格、月付的价格等等。这些都是基于上诉两个异步请求的结果衍化计算出来的。
+  5. 渲染页面内容相关的逻辑在这个函数里倒是几乎没有看到。
+     
+**** 代码                                                            :secret:
+-----BEGIN PGP MESSAGE-----
+
+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
+Bl+4wg3rZePy7sEPumHt
+=EqqS
+-----END PGP MESSAGE-----
+
+*** 具体方案
+  - 请求的结果原封不动的存在state中
+  - 衍化计算的结果，尽量用getter来实现。请求的函数尽量保持单一、纯粹。每个getter的命名尽量精准，逻辑清晰。
+  - 请求分为两步：
+    1. fetch premium config
+    2. 拿到premium config，再去Store请求价格
