@@ -124,7 +124,7 @@ Bl+4wg3rZePy7sEPumHt
 
 *** 具体方案
   - 请求的结果原封不动的存在state中
-  - 衍化计算的结果，尽量用getter来实现。请求的函数尽量保持单一、纯粹。每个getter的命名尽量精准，逻辑清晰。
+  - 衍化计算的结果，尽量用getter来实现。请求的函数尽量保持单一、纯粹。每个getter的命名尽量精准，逻辑清晰。不管后续会不会用到，暂时先等价迁移。
   - 请求分为两步：
     1. fetch premium config
     2. 拿到premium config，再去Store请求价格
