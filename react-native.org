@@ -91,4 +91,3 @@
 ** Touch组件无法响应
   - [[*兼容问题：Android平台下，Animated.View里的Touch组件无法响应。][兼容问题：Android平台下，Animated.View里的Touch组件无法响应。]]
 
-** 
