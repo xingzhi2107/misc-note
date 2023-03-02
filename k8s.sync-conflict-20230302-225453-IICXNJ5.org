@@ -1,0 +1,52 @@
+#+TITLE: K8S
+
+* 一些基本概念
+** k8s components
+*** Cluster
+   一个k8s“实例”就是一个cluster（集群）。所谓集群就是k8s服务的一个集合，涉及node（节点）、newtork等资源。显然，这是云服务商所需要提供的一个服务，例如Amazon EKS，AliCloud ACk。当然在本地学习的时候，则可以通过kind或者k3s等工具来创建一个cluster。
+
+* logs命令
+** 查看某个container的logs
+
+#+begin_src shell
+  kubectl logs [POD name] [-c CONTAINER name] [--follow] [flags]
+#+end_src
+
+  一般过程：
+  1. 通过get pods命令，找到你要的pod name
+  2. 通过describe pods命令，找到你的container name
+  3. 执行上面的命令，来查看logs
+
+
+* exec命令
+** attach到某个container的shell上
+
+#+begin_src shell
+  kubectl exec -it <pod-name> -c <container-name> — bash
+#+end_src
+
+  一般过程：
+  1. 通过get pods命令，找到你要的pod name
+  2. 通过describe pods命令，找到你的container name
+  3. 执行上面的命令，来attach到bash这个shell上
+
+
+* 实践日志
+
+** 2023-02-06 admindash访问新用户的profile页面挂掉
+
+看了下日志，是redis报错 =TTL exhausted=：
+
+#+begin_quote
+  File "/usr/local/lib/python3.6/dist-packages/redis/client.py", line 1606, in get
+    return self.execute_command('GET', name)
+  File "/usr/local/lib/python3.6/dist-packages/rediscluster/client.py", line 551, in execute_command
+    return self._execute_command(*args, **kwargs)
+  File "/usr/local/lib/python3.6/dist-packages/rediscluster/client.py", line 706, in _execute_command
+    raise ClusterError('TTL exhausted.')
+rediscluster.exceptions.ClusterError: TTL exhausted.
+#+end_quote
+
+QA说，只有部分user id访问的时候才会有问题，按逻辑上下文来看，应该是新用户的id去访问，然后缓存不存在才会报错。
+
+然后我用ipython去访问，却不会报错。所以没有继续深究，直接选择kill gunicron的工作进程让server重启就好了。

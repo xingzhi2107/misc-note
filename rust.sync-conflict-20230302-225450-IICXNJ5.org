@@ -1,0 +1,106 @@
+#+TITLE: Rust
+
+* 重温容量计量单位
+  基本的换算方式:
+  - 1 bit :: 1位，即0或者1  
+  - 1 byte :: 1 byte = 8 bit，byte翻译为字节，可能是因为最早1 byte表示一个字符，即ASICC码 + 扩展ASICC码
+  - 1 kb :: 1024 bytes
+  - 1 mb :: 1024 kb
+
+  上面的换算还算简单，也很无趣。让我们通过一些问题来扩展下：
+  - 那么在64位CPU芯片指的是什么？
+  - 一个u32的int值，占用多少内存？u8的int值又占用多少？
+  - 一个字符占用多少内存？一个字符的字符串占用多少内存？
+  - 一个emoji占用多少内存？可能占用多少机械硬盘存储？可能占用多少固态硬盘存储？
+
+
+
+* 实践：Todo list
+  想通过实现一个命令行版的todo list程序，来尝试解决我心中的一个难题：
+
+  假定有一个 ~Vec<Todo>~ 这样的数组，如何实现一个函数 ~edit(idx, new_title)~ 来修改数组里的某个todo的title？
+  目前看到的版本都是一次性从文件读出所有todo，然后找到目标todo，生成一个新的todo，替换掉，然后写回文件。
+
+  我暂时解决不了，也找不到例子。所以，决定就用上诉的方法也实现一遍todo list，就当练手。至于问题，或许可以到V站上
+  请教：
+  1. 如何实现？
+  2. 如果按每次从文件读出，改完写回的方式。那rust的高性能优势又能有多少？
+
+** v1感想
+  第一版的实现方案真的不像一个rust程序——完全没有考虑开销问题。每个写操作，都会发生一次文件的读与写，类似这样：
+  #+begin_src rust
+    fn set_complete(id: u32, complete: bool) {
+        let mut todos = Todo::load_todos();
+
+        todos.iter_mut().for_each(|item| {
+            if item.id == id {
+                item.complete = complete
+            }
+        });
+
+        Todo::save_todos(&todos);
+    }
+#+end_src
+
+  
+
+  另外，感觉单单会immumteable、mutable、referance、ownership、lifetime是写不出来一个todo list的。
+  在实现edit/complete/incomplete等编辑操作的时候，大概会用到 ~iter_mut~ 接口。如果只知道 ~iter~ ，那大概要写成先找到目标task的index，然后通过index来修改task。
+  #+begin_src rust
+      pub fn edit_todo(id: u32, title: &str) {
+        let mut todos = Todo::load_todos();
+
+        todos.iter_mut().for_each(|item| {
+            if item.id == id {
+                item.title = String::from(title)
+            }
+        });
+
+        Todo::save_todos(&todos);
+    }
+#+end_src
+
+  在实现remove的时候，大概会用到 ~iter_into~ 接口（当然了，我后来知道了vector有一个 ~remove~ 接口）。不然想写出类似 ~let new_todos = todos.iter().filter().collect()~ 的时候，就会发现你的new_todos其实是一个 ~&Vec<Todo>~ 类型。
+  #+begin_src rust
+      pub fn remove_todo(id: u32) {
+        let todos = Todo::load_todos().into_iter()
+            .filter(|item| item.id != id)
+            .collect::<Vec<Todo>>();
+        Todo::save_todos(&todos);
+    }
+#+end_src
+
+  在实现command的时候，想用“命令模式”跟“决策链”模式来处理输入。这个也小折腾了一会，简单的学习了智能指针总算搞定了。当然了，最终结果还是比较丑陋的。
+  #+begin_src rust
+  pub fn deal_input(input: &str) {
+    let commands: Vec<Box<dyn Command>> = vec![  // 智能指针Box
+        Box::new(HelpCommand {}),
+        Box::new(ListCommand {}),
+        Box::new(AddCommand {}),
+        Box::new(EditCommand {}),
+        Box::new(CompleteCommand {}),
+        Box::new(IncompleteCommand {}),
+        Box::new(RemoveCommand {}),
+        Box::new(QuitCommand {}),
+    ];
+    let input = input.trim();
+    for cmd in commands.iter() {
+        let is_hint = cmd.match_command(input);
+        if is_hint {
+            cmd.exec_command(input);
+            return
+        }
+    }
+    panic!("Invalid input");
+}
+
+#+end_src
+
+  不过总得来说，这个小小的实践还是驱动了自己去了解更多的rust知识。我感觉官方的example有点简单了，在lifetime之前，可以插入一章实践项目章节，来介绍一些常用的接口。
+
+
+* 智能指针
+
+* 常用的iter接口
+** iter
+** vector特有
