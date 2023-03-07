@@ -21,4 +21,4 @@ gdb的命令挺多的，可以见这篇[[https://visualgdb.com/gdbreference/comm
 
 ** 打印寄存器
 
-=info registers= 就可以打印出各个寄存器的值。
+=info registers= 就可以打印出各个寄存器的值。但是为什么没有pc寄存器的值？
