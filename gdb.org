@@ -1,0 +1,24 @@
+#+TITLE: gdb
+
+
+* 各类命令
+gdb的命令挺多的，可以见这篇[[https://visualgdb.com/gdbreference/commands/][GDB Command Reference]]，以及这篇[[https://www.cs.mcgill.ca/~consult/info/gdb.html][Basic GDB commands]]。
+
+** x
+
+[[https://visualgdb.com/gdbreference/commands/x][x命令]]用来打印某个内存地址的内容。
+
+如：以 =汇编指令= 的格式，打印从 =0x100000= 内存地址开始的 =5= 条指令。对应的x命令是 =x/10i 0x1000000=
+
+** disassemble
+[[https://visualgdb.com/gdbreference/commands/disassemble][disassemble命令]]可以反汇编出一段指定的内容。指示符可以是一个函数，或者是地址等等。
+
+** stepi
+缩写=si=。step很好理解，就是执行一步。而加上 =i= 这个后缀的修饰，就是表示单独执行一条CPU指令。
+
+* 技巧
+这篇[[https://wizardforcel.gitbooks.io/100-gdb-tips/content/print-registers.html][100个gdb小技巧]]是挺不错的干货，下面就搬运一些看过的觉得有用的。
+
+** 打印寄存器
+
+=info registers= 就可以打印出各个寄存器的值。
