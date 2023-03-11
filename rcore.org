@@ -1,0 +1,10 @@
+#+TITLE: rCore学习流水
+
+
+学习[[https://rcore-os.cn/rCore-Tutorial-Book-v3/][rCore-Tutorial-Book]]的流水账，称不上笔记。
+
+* ch1
+** rustc -C
+  .cargo/config下的编译选项，诸如 =-Cforce-frame-pointers=yes= 的-C不是指C语言，而是指[[https://doc.rust-lang.org/rustc/codegen-options/index.html][Codegen Options]]。
+
+
