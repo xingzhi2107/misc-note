@@ -137,3 +137,5 @@ tty的前身，电传打印机“换行”的时候，需要两个操作：
   - PS4 :: debug脚本的track样式
 
   更详细的见[[https://www.thegeekstuff.com/2008/09/bash-shell-take-control-of-ps1-ps2-ps3-ps4-and-prompt_command/][这篇]]博客。不过实际上比较有用的，也就PS1环境变量
+* 补全
+* 美化输出样式
