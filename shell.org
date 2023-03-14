@@ -138,6 +138,10 @@ tty的前身，电传打印机“换行”的时候，需要两个操作：
 
   更详细的见[[https://www.thegeekstuff.com/2008/09/bash-shell-take-control-of-ps1-ps2-ps3-ps4-and-prompt_command/][这篇]]博客。不过实际上比较有用的，也就PS1环境变量
 * 补全
+  补全函数：
+  - $COMP_LINE :: 用户的输入
+  - $COMP_POINT :: 用户光标所处的位置
+  - COMPREPLY :: 即comp reply，接收补全函数的补全结果
 * 美化输出样式
 * shell的两种key binding
 shell的快捷键一般是emacs style的。可以通过 ~set -o vi~ 来切换成vi style。
