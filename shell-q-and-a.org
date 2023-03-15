@@ -1,0 +1,28 @@
+#+TITLE: Shell Q&A
+
+* 如何让一个脚本文件变成可执行文件？
+  1. 首先通过 ~chmod~ 命令给文件赋予 =可执行= 权限。
+     #+begin_src shell
+  > chmod +x <the-file-path>
+#+end_src
+  2. 其次，你要告诉系统，要用哪个脚本解析器来执行你的文件。以python3的脚本为例，需要在文件第一行写上：
+     #+begin_src
+#!/usr/bin/env python3       
+
+<脚本正文>     
+#+end_src
+
+   这样操作之后，你就可以在直接输入这个脚本的路径来执行这个脚本了。
+
+  推荐扩展阅读：
+  1. [[https://en.wikipedia.org/wiki/Shebang_%28Unix%29][HashBang]]
+  2. [[https://man7.org/linux/man-pages/man2/execve.2.html][execve(2) — Linux manual page]]
+
+* 执行可执行脚本的的时候，如何省略脚本的路径？
+  1. 首先，这个脚本得是一个[[https://en.wikipedia.org/wiki/PATH_(variable)][“可执行脚本”]]
+  2. 其次，你需要理解PATH环境变量的作用，及其修改方式。
+  3. 把你的可执行放在PATH的路径中就可以了
+
+  按我个人的习惯，我会在家目录下创建一个bin目录，然后把它加入到PATH变量中。再把
+  自己写的可执行脚本放在这个目录下，这样这些可执行脚本，就变成全局的命令了。
+
