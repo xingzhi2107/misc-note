@@ -26,3 +26,11 @@
   按我个人的习惯，我会在家目录下创建一个bin目录，然后把它加入到PATH变量中。再把
   自己写的可执行脚本放在这个目录下，这样这些可执行脚本，就变成全局的命令了。
 
+
+* htop vim之类的命令是如何实现在shell里画出动态的字符UI的？
+
+不是很透彻的理解它们怎么做到的。大概要用tyy接口，另外还要有操作光标的
+接口。据说它们都用到了[[https://en.wikipedia.org/wiki/Curses_(programming_library)][curses]]这个库。另外，github也有专门的一个[[https://github.com/topics/curses][topic]]
+聚集了基于curses开发的更高层级的库。
+
+VT100编码可以控制光标，以及一些shell的显示行为。
