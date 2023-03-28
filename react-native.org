@@ -38,10 +38,11 @@
 ** flex: 1无效问题                                                  :chatgpt:
   跟我们自己写组件的时候，会有多个元素嵌套一样，ScrollView也是有的。按理：
   1. style需要给flex: 1，这样ScrollView会撑满剩余空间
-  2. contentContainerStyle也需要flex: 1，这个是作用在ScrollView内部contentContainer元素的style，这样它就能撑满ScrollView的空间了。
+  2. contentContainerStyle需要minHeight: 100%（如果也是flex: 1会导致无法滚动），这个是作用在ScrollView内部contentContainer元素的style，这样它就能撑满ScrollView的空间了。
 
-  但估计ScrollView内部实现的时候，组件的root元素也吃contentContainerStyle，所以只需要给contentContainerStyle设置下flex: 1即可。
-   
+** flex: 1无法滚动问题
+  见[[*flex: 1无效问题][flex: 1无效问题]]
+
 * 手势接口PanResponder
   之前写了一个轮播组件，但是轮播的内容元素的事件全被屏蔽了，翻找了一些资料之后，最后解决了。这篇[[https://juejin.cn/post/6844903434445914119][《React Native 触摸事件处理详解》]]写得非常好！
 
