@@ -66,3 +66,6 @@ RESTFul接口是适合对资源进行操作。
   - 给外部使用的接口，则需要全局唯一的error code
   
 *** service层的接口能否相互调用？
+
+** 思考于 2023-04-02
+  如果采用业务error code，那么http status code应该给出400或者500的错误。

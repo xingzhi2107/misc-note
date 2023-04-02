@@ -3,3 +3,9 @@
 
 * API设计规范
   看到一篇蛮好的[[https://cloud.tencent.com/developer/article/1031107][API设计规范]]，定义了什么情况下使用HTTP Status Code，什么情况下使用业务Status Code。还有对API做了分类，分为“资源操作API”与“业务操作”。
+
+  [[https://v2ex.com/t/929251#reply2][Restful API URL 设计问题]]，这篇二楼的思路不错：
+  #+begin_quote
+一种划分思路，从 Post / Comment 这两个资源的生命周期，依赖关系，聚合关系出发。
+比如一个 Comment 一定仅是出现并关联在一个具体的 Post 上，不能完全创建的话，那就是 /posts/:postId/comments
+  #+end_quote
