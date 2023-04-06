@@ -54,3 +54,6 @@ class PageFooter extends PureComponent<Props, State> {
   #+end_src
 
   用了createStyles这个helper函数之后，footer里面的key是类型完整的，而且classes.footer也是类型完整的。
+
+* 错误处理库 -- true-myth
+  今天看到这篇[[https://journal.plain.com/posts/2022-10-04-error-handling-in-typescript-like-a-pro/][Error handling in TypeScript like a pro]]，突然眼前一亮。true-myth的Result简直跟rust一模一样。感觉这样能解决TS里一个函数调用，error不可知的问题。以后可以试试。话说python3的type hint能实现类型的功能吗？
