@@ -98,4 +98,10 @@
 * 兼容性问题汇总
 ** Touch组件无法响应
   - [[*兼容问题：Android平台下，Animated.View里的Touch组件无法响应。][兼容问题：Android平台下，Animated.View里的Touch组件无法响应。]]
+* 对React Navigation库的看法
+  [[https://reactnavigation.org/][React Navigation]]这个库应该是RN下比较流行的路由跟导航栏库了，功能比较丰富。但是还是用不太来：
+
+  - 太重。这个当然也是优点，但是像我不想使用它的导航栏功能，就没办法单独使用。
+  - 跟在web的路由体验不太一样。它用name而不是path作为路由标识。另外，web习惯把参数放在url的search里，但是这个库是另外再传props的。
+  - 太散。散的意思是说，一个页面的逻辑溢出到页面组件之外。我认为，title、actions这些应该放在页面组件的内部去处理，而不是在路由注册的地方去处理一堆title等逻辑。
 
