@@ -57,3 +57,8 @@ class PageFooter extends PureComponent<Props, State> {
 
 * 错误处理库 -- true-myth
   今天看到这篇[[https://journal.plain.com/posts/2022-10-04-error-handling-in-typescript-like-a-pro/][Error handling in TypeScript like a pro]]，突然眼前一亮。true-myth的Result简直跟rust一模一样。感觉这样能解决TS里一个函数调用，error不可知的问题。以后可以试试。话说python3的type hint能实现类型的功能吗？
+
+* assertion语句
+ [[https://blog.logrocket.com/assertion-functions-typescript/][Assertion functions in TypeScript]]
+
+ assertion函数蛮有用的。有时候你需要写一些数值校验函数，如果值通过了校验，一般可以确定值的是某种（些）类型。
