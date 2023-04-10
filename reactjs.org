@@ -28,3 +28,8 @@
     Virtual DOM在React的实现里包含了element、fiber。
 
   - [[http://benweizhu.github.io/blog/2018/04/27/deep-thinking-in-react-8/][benweizhu]] 这个人的博客挺系统的
+
+* hooks
+** 2023-04-10 阅读[[https://zhuanlan.zhihu.com/p/455317250][不优雅的 React Hooks]]
+  个人还是不喜欢hooks。我感觉一个组件，除非它真的非常简单，不然我还是喜欢用class component来实现。因为个人喜欢自上而下的去“逐层”写UI代码，但是实在不知道怎么在functional component里实现这种写法。
+  今天又去看了hooks相关的东西，是因为能切实的感觉到react生态都在往hooks靠拢。例如，今天用react-router，这个库从最新的v6版本开始几乎所有的接口都要用hooks，这个实在让我有点崩溃。
