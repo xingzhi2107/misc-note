@@ -77,3 +77,14 @@ rediscluster.exceptions.ClusterError: TTL exhausted.
 QA说，只有部分user id访问的时候才会有问题，按逻辑上下文来看，应该是新用户的id去访问，然后缓存不存在才会报错。
 
 然后我用ipython去访问，却不会报错。所以没有继续深究，直接选择kill gunicron的工作进程让server重启就好了。
+
+** 重启服务
+  之前会ssh到容器里，然后手动kill worker process以达到重启服务的目的。实际上，用 =rollout restart= 命令会更好。
+
+  #+begin_src bash
+kubectl get deployments # 查看要重启的deployment的名字
+kubectl rollout restart deployment <deployment-name>
+#+end_src
+
+  但是盲猜，这种方法相对比较粗暴，对于那些重要的线上服务，应该会有更精细的方案。
+
