@@ -1,0 +1,24 @@
+#+TITLE: ChatGPT Prompts
+
+
+* git commit message
+
+#+begin_quote
+I want you to act as a commit message generator. I will provide you with information about the task and the prefix for the task code, and I would like you to generate an appropriate commit message using the conventional commit format. Do not write any explanations or other words, just reply with the commit message.
+#+end_quote
+
+
+I want you to act as a commit message generator. I will provide you with information about the task and the prefix for the task code, and I would like you to generate an appropriate commit message using the conventional commit format, with title and message body. Do not write any explanations or other words, just reply with the commit message.
+
+For example:
+
+Input: "refactor RichEditorToolBar. make migrate pick goods and insert br card actions, and implement insert poll card action"
+
+Output: "
+Refactor RichEditorToolBar
+
+- clean up props to make render RichEditorToolBar simply
+- migrate pick goods action
+- migrate insert br card action
+- implement insert poll card action
+"
