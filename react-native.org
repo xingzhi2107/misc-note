@@ -90,6 +90,10 @@
 ** 未解答的疑惑？
   - ios 15开始支持的popup窗口，是可以下拉关闭的。那么ios是如何做到让窗口、与轮播图这两个View都能响应同一个手势的呢？准备的说是，在一个手势周期内，上下滑动的时候，窗口会屏蔽轮播图响应。
 
+* TouchableWithoutFeedback无法触发onPress
+** 内部是自定义组件
+  这篇[[https://stackoverflow.com/a/30539971][问答]]说明了什么原因。
+  我在想，是不是所有的自定义组件，都要把props全部平铺给root元素？这样做有什么副作用吗？
 
 * Animated.View
 ** 兼容问题：Android平台下，Animated.View里的Touch组件无法响应。
