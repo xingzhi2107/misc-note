@@ -7,4 +7,10 @@
 ** rustc -C
   .cargo/config下的编译选项，诸如 =-Cforce-frame-pointers=yes= 的-C不是指C语言，而是指[[https://doc.rust-lang.org/rustc/codegen-options/index.html][Codegen Options]]。
 
+** 没能掌握的linker语法
+  看完内存布局那章，感觉收获很大。但是对linker的语法实在掌握不下来，只能零零散散知道一些知识。还有更细的汇编语言，暂时也啃不下来。暂且这样吧！先继续往后看。
 
+** logging的实现
+  我实现logging mod的时候，是比较死板的写了对应5个level的宏。看完参考答案后，感觉用log包实现的方案更现代化一点。
+
+* ch2
