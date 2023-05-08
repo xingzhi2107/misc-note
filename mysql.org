@@ -108,3 +108,14 @@ HAVING
 
    
    
+* 坑：插入截断不会报错
+  如果没有开启 =STRICT_TRANS_TABLES= mode，插入的值过长会默默地被截断，不报错。可以在配置文件my.cnf的[mysqld] section下配置要开启的mode：
+#+begin_src 
+[mysqld]
+sql-mode="STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION"
+#+end_src
+
+  据说mysql是默认关闭这个mode，可能是为了向后兼容的缘故。无论如何，这个选项最好显示的打开！我感觉默默截断是非常非常危险的！在开发阶段还未必能发现问题，上线之后才丢数据就很恶心。
+
+  
+  
