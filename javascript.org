@@ -824,3 +824,24 @@ topEnv['objectGetApply'] = function (ctx, obj, key, ...args) {
   上网吐槽之际，才去想着看看别的解决方案，才发现mobx就很完美嘛（目前而言）！
 
   不过重点不是发现mobx，重点是为什么看过那么多次mobx这个词，自己就没想着稍微深入的了解一下呢？那种“对框架疲惫”的心态真的是毒瘤！勇于探索新事物，尝试新事物，面对槽点勇于发声，不然类似的事情会在发生，自己离被淘汰也就不远了。
+
+* proxy get handler的问题
+  先前，通过proxy在RN的StyleSheet基础上封装了一个比较无感知切换color schema的StyleSheet工具。其原理，其实就是用proxy get handler来拦截styles的getter操作，在内部动态判断当前应该用什么color schema。
+  今天有同事跟我说，把整个styles传入一个第三方组件的时候，完全没有起到作用。我debug后，发现这个第三方组件把传入的styles，用 =...= 解构了一遍。自己实验了一下，才发现styles被 =...= 解构的时候，是个空对象。这是因为，在用proxy封装的时候，target对象本身就是一个空对象。js解析器当然不知道它有什么key了，解构成空对象也很合理。
+  #+begin_src javascript
+  new Proxy({}, styleProxyHandler);
+#+end_src
+
+  经过尝试，发现加个ownKeys handler也是没用了。最终是把对象的key，全部复制一份到target里。
+  #+begin_src typescript
+    // need a "empty" target with all keys
+    // to fix {...obj} operator
+    const emptyTarget = Object.keys(lightStyles).reduce((obj, key) => {
+      obj[key] = null;
+
+      return obj;
+    }, {} as any);
+
+    return new Proxy(emptyTarget, styleProxyHandler);
+
+#+end_src
