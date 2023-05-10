@@ -152,3 +152,10 @@
   - 图片最好加上防外链引用保护，避免自己服务变成别人的免费图床；
   - 可以实现一个死图GC脚本，比如帖子已经被自己用户删除了，那么帖子里的s3 图片也可以删除了；
   - 用户在客户端编辑帖子时，把一张图片删除了，也可以主动发起一个请求，去把图片删除了；
+
+* 不支持inline image
+  RN竟然是不支持inline image的。
+
+  如果你的文本只有一行，不会出现wrap，那把图跟文字放在同一行，那还是能实现的。但这不算是inline image。
+
+  [[https://stackoverflow.com/questions/58824285/react-native-inline-image-with-text][React native: Inline image with text]]
