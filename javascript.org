@@ -845,3 +845,6 @@ topEnv['objectGetApply'] = function (ctx, obj, key, ...args) {
     return new Proxy(emptyTarget, styleProxyHandler);
 
 #+end_src
+
+* JSON.parse BigInt的思考
+  今天又有一位客串写JS的同事被js的整数溢出坑了一下午，让我不禁又要重新思考这个老问题。
