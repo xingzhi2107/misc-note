@@ -159,3 +159,8 @@
   如果你的文本只有一行，不会出现wrap，那把图跟文字放在同一行，那还是能实现的。但这不算是inline image。
 
   [[https://stackoverflow.com/questions/58824285/react-native-inline-image-with-text][React native: Inline image with text]]
+
+* SafeAreaView不safe
+ SafeAreaView在ScrollView里出现的话，貌似会引起SafeAreaView不停的layout，导致元素抖动。具体细节未考究。
+
+ [[https://stackoverflow.com/questions/62046011/view-is-shaking-by-no-reason-on-react-native-ios][View is shaking by no reason on React Native iOS]]
