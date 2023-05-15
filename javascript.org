@@ -848,3 +848,18 @@ topEnv['objectGetApply'] = function (ctx, obj, key, ...args) {
 
 * JSON.parse BigInt的思考
   今天又有一位客串写JS的同事被js的整数溢出坑了一下午，让我不禁又要重新思考这个老问题。
+
+** 现有解决方案及其问题
+  这个问题一般出现在server跟client端通讯的情况。之前的解决方案是在server端做转换。即www层有个拦截器，遍历整个object，在返回数据的时候把以id结尾的key的值转成string，或者接收client数据的时候把string转成int。
+
+  这个方案算是基本可行。但还是存在一些问题：
+  - 严重依赖字段的命名，字段如果不是以id结尾就不起作用。虽然可以继续加这个关键字列表，但是还是很粗糙，而且可能“误杀”。
+  - 
+
+
+
+** JSON.parse reviver 参数
+** https://github.com/sidorares/json-bigint/blob/master/lib/parse.js 这个库
+
+** 兼容typescript
+  全部用BigInt表示int
