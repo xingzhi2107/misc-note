@@ -852,14 +852,39 @@ topEnv['objectGetApply'] = function (ctx, obj, key, ...args) {
 ** 现有解决方案及其问题
   这个问题一般出现在server跟client端通讯的情况。之前的解决方案是在server端做转换。即www层有个拦截器，遍历整个object，在返回数据的时候把以id结尾的key的值转成string，或者接收client数据的时候把string转成int。
 
-  这个方案算是基本可行。但还是存在一些问题：
-  - 严重依赖字段的命名，字段如果不是以id结尾就不起作用。虽然可以继续加这个关键字列表，但是还是很粗糙，而且可能“误杀”。
-  - 
+  这个方案算是基本可行。但还是存在问题：
+  - 严重依赖字段的命名，字段如果不是以id结尾就不起作用。
+  - 虽然可以继续加这个关键字列表，但是还是很粗糙，而且可能“误杀”。
+  - 从源头开始就“污染”了类型。本该是Int的值，从此都必须是string
+
+  Twitter的方案。跟上面的方案大同小异，他们的方案就是给会溢出的字段多增加是str字段。如id会溢出，那就增加一个id_str字段。
 
 
+  这种int转string的方案虽然丑陋，但是还算“稳定”。一般而言，我们也不会拿id去做一些减价乘除的运算，它说白了就是一个符号，在client端用string承载，也还合理。
 
-** JSON.parse reviver 参数
-** https://github.com/sidorares/json-bigint/blob/master/lib/parse.js 这个库
+  但是，有没有更优雅的方案？
 
-** 兼容typescript
-  全部用BigInt表示int
+** 探索更优雅的方案
+
+*** 溢出不是JSON的问题
+  int溢出是JS的问题，在client端拿到JSON数据的时候，int的信息还是存在的。只不过从JSON解析成JS的value的时候，溢出了。通过一些小技巧，可以防止int溢出。
+
+  - 通过reviver参数，详见[[https://stackoverflow.com/a/69644630][这篇回答]]。总结一下就是对JSON预处理，把会溢出的int变成string。然后在parse的时候，把这种string转成BigInt。
+  - 使用[[https://github.com/sidorares/json-bigint][json-bigint]]库。看了下它的[[https://github.com/sidorares/json-bigint/blob/master/lib/parse.js][源码]]，大概是用js实现一个JSON解析器。
+
+  有了JSON与JS相互转换不丢失信息的方案，就可以不在server端做转换。
+
+*** 如何与TypeScript和睦相处？
+  虽然有了可以在client端做转换的方案。但是新的问题也出现了：一个int值，什么时候会被转成BigInt，什么时候会被转成number？假设，有个topic实体，它有一个id字段。这个id字段可能溢出。
+
+  大部分情况下，都不用关心这个问题。因为我们基本不会拿id去做一些运算，这种情况下建议把id标记为 =number | BigInt= 类型，这样遇到有问题的场景的时候，期待TypeScript可以提醒我们。
+
+  另外，也可以图方便。直接让所有的int都转成BigInt，所有的这些字段都标记为 =BigInt=。但是这样做会不会有性能问题？有待考究。
+
+
+*** 总结
+  综上有个大概得方案以待验证：
+  - 使用json-bigint库，在api层把JSON文本转成object以防止int溢出。配置所有的int都转成BigInt。
+  - 所有的int字段类型都从number改成BigInt。
+
+  这样的做法会不会更优雅？
