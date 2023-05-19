@@ -164,3 +164,13 @@
  SafeAreaView在ScrollView里出现的话，貌似会引起SafeAreaView不停的layout，导致元素抖动。具体细节未考究。
 
  [[https://stackoverflow.com/questions/62046011/view-is-shaking-by-no-reason-on-react-native-ios][View is shaking by no reason on React Native iOS]]
+
+* 监听hardwareBackPress时机不当
+  最近实现一个可展开输入框。在用户已经输入文本之后，如果按物理返回键，需要拦截下来询问用户是否确认退出。这自然需要用到监听hardwareBackPress这个事件。问题就出在，当这个输入框没有被聚焦的时候，这个监听依然在起作用。这就导致物理返回键被一直拦截，用户无法使用物理返回键退出输入框所在的页面。
+
+  想了一会之后，觉得改变监听的时机，则很自然的化解这个问题：
+  1. 在focus的时候才去注册监听
+  2. 在blur或者willUnmount的时候，取消监听
+
+* AndroidInputSoftMode与KeyboardAvoid
+  KeybarodAvoid在android下基本是不可用的。在Android下，需要设置AndroidInputSoftMode。一般设置成SOFT_INPUT_ADJUST_RESIZE即可。话说，这个为什么不是默认行为？
