@@ -174,3 +174,4 @@
 
 * AndroidInputSoftMode与KeyboardAvoid
   KeybarodAvoid在android下基本是不可用的。在Android下，需要设置AndroidInputSoftMode。一般设置成SOFT_INPUT_ADJUST_RESIZE即可。话说，这个为什么不是默认行为？
+  https://github.com/facebook/react-native/issues/11681#issuecomment-277645925
