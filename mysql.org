@@ -117,5 +117,14 @@ sql-mode="STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION"
 
   据说mysql是默认关闭这个mode，可能是为了向后兼容的缘故。无论如何，这个选项最好显示的打开！我感觉默默截断是非常非常危险的！在开发阶段还未必能发现问题，上线之后才丢数据就很恶心。
 
-  
-  
+
+* BIGINT(20)与VARCHAR(1024)
+  很久没有建表了，今天需要建一张video info的表，需要有video的url、duration、width、height等信息。拾遗了一些知识：
+
+** VARCHAR最大值不是256
+  之前在学校没好好学，只是依葫芦画瓢的写VARCHAR(256)，以为这就是VARCHAR的最大值。实际上较新的mysql版本（大概5.1之后），varchar能支持到65535，见[[https://dev.mysql.com/doc/refman/8.0/en/char.html][11.3.2 The CHAR and VARCHAR Types]]。
+
+
+** INT系的显示位宽与存储值无关
+  BIGINT(size)跟VARCHAR(size)的size含义不一样。Int系列的这个size，指的是显示位宽。当字段被声明成UNSIGNED ZEROFILL时才有用，详见[[https://www.cnblogs.com/polk6/p/11595107.html][MySQL Integer类型与INT(11)]]。这里不禁要问，既然基本都没用，那平时写sql的时候，有必要声明这个size吗？
+
