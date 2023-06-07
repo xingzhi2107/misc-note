@@ -194,3 +194,50 @@ HINT:  Use DROP ... CASCADE to drop the dependent objects too.
   最终结果：优化前，整个sql需要45s+，优化后大约只需要16s。再这个基础上继续调试sql，就不会那么痛苦了！
 
   后续可以把建立临时表的过程，变成脚本之类的，方便及时删除所有临时表，或者重建临时表。
+
+* 实践：grant schema的SELECT权限给某个group
+  看了官方的[[https://www.postgresql.org/docs/current/sql-grant.html][文档]]，准备把一个新建的schema的SELECT权限赋给某个组：
+  #+begin_src sql
+GRANT SELECT ON ALL TABLES IN SCHEMA schema_xxx TO GROUP read_only;  
+#+end_src
+
+  但是read_only组下面的用户依然无法SELECT schema_xxx下的表。这就是一个小坑点，单单赋予SELECT权限是不够的，还需要赋予USAGE权限：
+
+  #+begin_src sql
+GRANT USAGE ON SCHEMA schema_xxx TO GROUP read_only;
+#+end_src
+
+
+* 实践：WITH语句下，RedShift的INSERT INTO与postgresql不一样
+  看了官方[[https://www.postgresql.org/docs/current/sql-insert.html][文档]]，一句WITH语句下的INSERT INTO明明是这么写：
+  #+begin_src sql
+WITH upd AS (
+  UPDATE employees SET sales_count = sales_count + 1 WHERE id =
+    (SELECT sales_person FROM accounts WHERE name = 'Acme Corporation')
+    RETURNING *
+)
+INSERT INTO employees_log SELECT *, current_timestamp FROM upd;  
+#+end_src
+  但是在Amazon的RedShift上就是不支持，经过尝试，才发现要把INSERT INTO employees_log放在整个WITH前面，就像这样：
+  #+begin_src
+INSERT INTO employees_log
+WITH upd AS (
+  UPDATE employees SET sales_count = sales_count + 1 WHERE id =
+    (SELECT sales_person FROM accounts WHERE name = 'Acme Corporation')
+    RETURNING *
+)
+SELECT *, current_timestamp FROM upd;    
+#+end_src
+
+   跟同事交流需求后发现，其实我的需求其实只是建临时表，所以只需要用SELECT INTO就好了，还可以省去手动建表的过程。就像这样：
+   #+begin_src sql
+WITH upd AS (
+  UPDATE employees SET sales_count = sales_count + 1 WHERE id =
+    (SELECT sales_person FROM accounts WHERE name = 'Acme Corporation')
+    RETURNING *
+)
+SELECT *, current_timestamp INTO employees_log FROM upd;    
+#+end_src
+
+
+
