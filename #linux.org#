@@ -1,0 +1,15 @@
+#+TITLE: Linux
+
+* arch linux安装记
+以往一直都使用ubuntu之类的发行版，这次突然想试试arch。整个安装的过程，都是要自己手动敲命令选择的。感觉真的是要让用户自己尽量控制系统的各个细节。
+
+* 自己build openvpn遇到的问题
+  公司需要用到某个特定老版本的openvpn，奈何官方找不到linux x86 64的包。那就只能自己build，但是build的时候，发现依赖的openssl版本又跟我archlinux上装的不兼容。这时候突然感慨，c/c++体系为什么没有类似node_modules的概念？
+
+  去Google了下，看到[[https://stackoverflow.com/questions/38985889/build-openvpn-with-specific-openssl-version][这篇Q&A]]。粗略看了下感觉问题可能没那么简单。这个版本的openvpn，不仅编译是依赖openssl 1，可能运行时也依赖openssl1。好吧！那只能暂时先放下，目前没空进一步深入处理。
+
+  晚上回家想到，openvpn的client是不是可以运行在docker里，然后把vpn网络通过某种方式提供给host？自己是个计算机网路的渣渣，哪天有空再探究下这个问题吧。
+
+* lsof
+
+** 
