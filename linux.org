@@ -9,3 +9,7 @@
   去Google了下，看到[[https://stackoverflow.com/questions/38985889/build-openvpn-with-specific-openssl-version][这篇Q&A]]。粗略看了下感觉问题可能没那么简单。这个版本的openvpn，不仅编译是依赖openssl 1，可能运行时也依赖openssl1。好吧！那只能暂时先放下，目前没空进一步深入处理。
 
   晚上回家想到，openvpn的client是不是可以运行在docker里，然后把vpn网络通过某种方式提供给host？自己是个计算机网路的渣渣，哪天有空再探究下这个问题吧。
+
+* lsof
+
+** 
