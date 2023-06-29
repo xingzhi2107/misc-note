@@ -38,6 +38,21 @@
   );
 #+end_src
  
+** show table column types
+  详见文档[[https://www.postgresqltutorial.com/postgresql-administration/postgresql-describe-table/][PostgreSQL Describe Table]]
+  
+  ~\d <table-name>~ 可以查看表结构。在不支持的工具里，也可以用query来查询表结构，例如：
+#+begin_src sql
+SELECT
+   table_name,
+   column_name,
+   data_type
+FROM
+   information_schema.columns
+WHERE
+        table_schema='zhenguo'
+  AND table_name = 'xx_table_name';  
+#+end_src
 
 ** list all table
 可以使用 ~\dt~ 或者 ~\dt *.~ 列出所有table，后者会列出postgresql内建的table。或者使用sql:
@@ -240,4 +255,10 @@ SELECT *, current_timestamp INTO employees_log FROM upd;
 #+end_src
 
 
+* 实践：处理INSERT时精度溢出报错 -- Numeric data overflow (result precision)
+  看报错信息后就大概知道原因。精度溢出，那应该是自动建表（使用SELECT...INTO）的时候自动推导的字段类型精度太低了，不满足后续插入的值。
 
+  查看了一些自动建表的字段类型，发现有几个字段的精度仅仅只有两位。究其原因是，因为这几个字段的值是固定的 ~0.0~。
+
+  解决方案是简单的做个字段类型强制转换，把那几个字段的固定值都改成 ~0.0::float8~。
+  
