@@ -262,3 +262,51 @@ SELECT *, current_timestamp INTO employees_log FROM upd;
 
   解决方案是简单的做个字段类型强制转换，把那几个字段的固定值都改成 ~0.0::float8~。
   
+* 实践：同一个group里，进行多次条件不同的count
+  从视频播放的event里，计算出每个视频播放的完成率。这个event包含视频的id、是否播放完成这两个字段。容易得出目标公式为 ~video_complete_rate = complete_play_count / total_play_count~。那么就需要计算出每个视频的播放量、播放完成量。
+
+  我之前的做法是用两个子查询，分别计算出每个视频的total_play_count跟complete_play_count，然后再join在一起去计算video_complete_rate。
+
+  两个查询实在太相似，总感觉有简化的方案。自己探索一番没解决，请教PA的同事后，才知道可以做得很简单。
+
+  对video_id做group之后，每个group的count其实是可以计算多次的，而且可以通过CASE...WHEN语句加条件。那么最终简化的sql如下：
+
+#+begin_src sql
+SELECT
+    video_id,
+    COUNT(1) total_play_count,
+    COUNT(
+            -- 通过case when，将数据转换为1跟null，然后进行count只会统计非null的值
+            CASE
+                WHEN complete=1 THEN 1
+                ELSE null
+            END
+    ) complete_play_count,
+    (COALESCE(complete_play_count, 0)::float8 / total_play_count::float8) AS play_complete_rate,
+    1 AS NO_USE
+FROM target_table
+group by video_id
+ORDER BY play_complete_rate DESC;  
+#+end_src
+
+* 实践：每个group里top 100的topic -- PARTITION BY
+  窗口函数的用法，[[https://www.zhihu.com/tardis/zm/art/92654574?source_id=1003][这篇]]写得挺好的。总结下：
+  - 窗口函数不同于group by，不会压缩行数
+  - 每个“窗口”内部可以排序
+  - 聚合函数作为窗口函数时的行为，有点“怪异”，要小心
+  - 其大概语法是 ~窗口函数 OVER (PARTITION BY 分窗口字段 ORDER BY 排序字段) AS target_col_name~
+
+
+  回头来写从每个group里，query出top 100的topic如下：
+#+begin_src sql
+SELECT
+    group_id,
+    topic_id,
+    score,
+    ROW_NUMBER() OVER (PARTITION BY group_id ORDER BY score DESC) AS rank_in_group
+FROM target_table
+WHERE rank_in_group <= 100
+ORDER BY group_id, score DESC;
+#+end_src
+
+
