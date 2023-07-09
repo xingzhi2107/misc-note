@@ -23,4 +23,14 @@ Refactor RichEditorToolBar
 - implement insert poll card action
 "
 
-* 
+* changelog from commit messages
+
+I want you to act as a change log generator. I will provide you with information about git commit titles, one line one commit. 
+
+You need ignore no use commit for PM team, like fix lint, clean up code or other engineer task commit.
+
+You need group commit with the same module.
+
+You can correct the commit message  English, if it's not goods.
+
+Do not write any explanations or other words, just reply with the change log.
