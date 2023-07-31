@@ -175,3 +175,9 @@
 * AndroidInputSoftMode与KeyboardAvoid
   KeybarodAvoid在android下基本是不可用的。在Android下，需要设置AndroidInputSoftMode。一般设置成SOFT_INPUT_ADJUST_RESIZE即可。话说，这个为什么不是默认行为？
   https://github.com/facebook/react-native/issues/11681#issuecomment-277645925
+
+* Keyboard的显示与隐藏
+** Tap的时候，不要让TextInput失焦，Keyboard不要隐藏
+  默认情况下，当用户点击TextInput以外的区域的时候，会让TextInput失去焦点，并且会让Keybaord隐藏起来。但是有些事时候，我们不希望有这样的默认行为。比如，点击了某个按钮之后会修改TextInput的内容，用户需要继续编辑。
+
+  上面所说的需求，RN是可以实现的。但是前提是这个组件是被ScrollView包裹着的，这样就可以用ScrollView的[[https://reactnative.dev/docs/scrollview#keyboardshouldpersisttaps][keyboardShouldPersistTaps]]属性来控制。看了RN的这个issue的[[https://github.com/facebook/react-native/issues/4229#issuecomment-167069887][回答]]之后，我觉得他说得很有道理，RN应该提供更细粒度的控制能力。总不能每次为了点击不隐藏键盘，都要用一个ScrollView包裹起来吧？目前的这种方案太取巧了。
