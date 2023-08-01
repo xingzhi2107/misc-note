@@ -62,3 +62,34 @@ class PageFooter extends PureComponent<Props, State> {
  [[https://blog.logrocket.com/assertion-functions-typescript/][Assertion functions in TypeScript]]
 
  assertion函数蛮有用的。有时候你需要写一些数值校验函数，如果值通过了校验，一般可以确定值的是某种（些）类型。
+
+* 什么时候需要定义return type？
+  [[https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#return-type-annotations][官方]]是这样说的：
+#+begin_quote 
+Much like variable type annotations, you usually don’t need a return type annotation because TypeScript will infer the function’s return type based on its return statements. The type annotation in the above example doesn’t change anything. Some codebases will explicitly specify a return type for documentation purposes, to prevent accidental changes, or just for personal preference.
+#+end_quote
+ 
+  如官方所说，个人也认为大部分情况下是可以忽略return type，让TS推导即可。但是大概有三种情况是需要自己写return type：
+  1. 写库函数、对外接口时。出于严肃，这些场景下要特别标明返回类型。
+  2. TS自动推导的类型，不符合你的预期。比如，你写下一个函数返回字符串 "abc"，这时候TS自动推导这个函数的返回值类型是string。但是你预期这个函数只能返回 "abc" | "hello" | "world"等几个有限的类型。
+  3. 函数的内部结构比较复杂时。这时候标明你预期的return type，能够避在写实现这个复杂函数的时候，迷失了预期的返回值类型。
+
+  参见：
+  [[https://stackoverflow.com/questions/70001511/why-specify-function-return-types][Why specify function return types?]]
+  [[https://www.totaltypescript.com/tips/dont-use-return-types-unless][Don't use return types, unless...]]
+
+
+* interface与type的区别？
+  我一直不理解已经有type了，为什么TS官网还要提供interface关键字？可能只是为了语义化，可能interface更倾向于描述结构化的对象。不得而知！
+
+  回归主题，二者有什么区别？有那么一点，但是无关紧要：
+  1. interface无法给另一个类型其别名，而type可以;
+  2. interface可以重复声明，合并props但是type可以；
+
+  正如[[https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#interfaces][官方]]所说的那样：
+  #+begin_quote
+If you would like a heuristic, use interface until you need to use features from type.
+  #+end_quote
+  反正优先使用interface即可，搞不定再用type。至于二者有什么区别，就不用去关心了。
+
+* 面量的类型推导
