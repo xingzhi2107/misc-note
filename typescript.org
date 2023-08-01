@@ -92,4 +92,33 @@ If you would like a heuristic, use interface until you need to use features from
   #+end_quote
   反正优先使用interface即可，搞不定再用type。至于二者有什么区别，就不用去关心了。
 
-* 面量的类型推导
+* 面量的类型推导 -- Literal type and literal interface
+  重新看了TS的文档，才发现自己遗漏了一些面量类型推导的细节。
+
+** let与const的区别
+
+#+begin_src typescript
+  let s = 'hello';   // 推导出来s的类型是string, 因为是let声明的变量，说明后续可能会变
+  const s2 = 'hello';  // 推导出来s的类型是'hello', 因为是用const声明的变量，后续已经不可能会变
+#+end_src
+
+
+** as const用法
+  声明对象的时候，默认推导出来的属性类型都是尽量泛化的，如下：
+
+#+begin_src typescript
+  const obj = {
+      name: 'hello',
+      age: 17,
+  }   // obj.name的类型是string, obj.age的类型是number
+#+end_src
+
+  但是有些时候，你希望默认推导出来的类型是面量，可以用 as const
+
+#+begin_src typescript
+  const obj = {
+      name: 'hello',
+      age: 17,
+  } as const   // obj.name的类型是'hello', obj.age的类型是 17
+#+end_src
+
