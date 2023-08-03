@@ -128,3 +128,6 @@ sql-mode="STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION"
 ** INT系的显示位宽与存储值无关
   BIGINT(size)跟VARCHAR(size)的size含义不一样。Int系列的这个size，指的是显示位宽。当字段被声明成UNSIGNED ZEROFILL时才有用，详见[[https://www.cnblogs.com/polk6/p/11595107.html][MySQL Integer类型与INT(11)]]。这里不禁要问，既然基本都没用，那平时写sql的时候，有必要声明这个size吗？
 
+* CharSet相关
+  现在一般情况下可以使用utf8mb4字符集，这样才能存储那些新奇的emoji。
+
