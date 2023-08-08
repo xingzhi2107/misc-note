@@ -33,3 +33,20 @@
 ** 2023-04-10 阅读[[https://zhuanlan.zhihu.com/p/455317250][不优雅的 React Hooks]]
   个人还是不喜欢hooks。我感觉一个组件，除非它真的非常简单，不然我还是喜欢用class component来实现。因为个人喜欢自上而下的去“逐层”写UI代码，但是实在不知道怎么在functional component里实现这种写法。
   今天又去看了hooks相关的东西，是因为能切实的感觉到react生态都在往hooks靠拢。例如，今天用react-router，这个库从最新的v6版本开始几乎所有的接口都要用hooks，这个实在让我有点崩溃。
+
+
+* 实践：使用误区 -- 用状态变更来取代事件
+  需求大概是这样的，一个list view里，会有video item，当video在屏幕露出75%的时候自动播放，否则关闭。只有list组件能监听到哪些item露出超过75%了。
+
+  之前的实现：video item有一个isPlaying的props，又list维护受控。video item在componentDidUpdate里去监测isPlaying的前后变化，以此来决定是播放还是暂停video
+
+  我认为这样的实现有如下坏处：
+  1. 不直观
+  2. 在componentDidUpdate里的监听逻辑实现起来比较麻烦，当状态变量变成多个的时候，实现起来更麻烦。
+
+
+  我认为比较好的方案：
+  1. video item里实现一个（或两个）handler，如：handleItemVisibleChanged，来承接video item的露出75%事件
+  2. list view里维护view item的Refs，当露出75%时则调用对应的ref的handleItemVisibleChanged
+
+  我觉得这种方案更加直观，语义明了。
