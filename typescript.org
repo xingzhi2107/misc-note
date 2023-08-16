@@ -122,3 +122,167 @@ If you would like a heuristic, use interface until you need to use features from
   } as const   // obj.name的类型是'hello', obj.age的类型是 17
 #+end_src
 
+
+* 类型标记
+  类似早期的静态强类型语言，TS可以给变量加上类型符号来限制变量的类型，举几个例：
+
+#+begin_src typescript
+// 限制变量name只能是string类型
+let name: string;
+
+
+// 先用type关键字定义一个类型 -- ButtonProps
+type ButtonProps  = {
+
+  // 必填字段，类型为string
+  title: string;
+
+  // 问号表示可选字段，类型为 'small' 或者 'middle' 或者 'large'，这是一个Union Type
+  size?: 'small' | 'middle' | 'large';
+
+  // 同上为可选字段，同样是一个Union Type
+  loading?: boolean | {delay: number};
+}
+// 限制变量prop只能是ButtonProps类型
+let prop: ButtonProps;
+
+
+// 限制函数sum的三个参数都要是number类型，最后一个参数的问号表示可以这个参数省略
+// 结尾的number限制函数需要返回一个number类型
+function sum(first: number, second: number, third?: number): number {}
+#+end_src
+
+  这样写又太麻烦了，所以一般只有如下几种情况会去显示标明类型：
+  1. 写数据entry定义、接口定义的时候；
+  2. 变量先声明，后初始化的时候；
+  3. TS自动推导出的类型，只是其中一种情况，需要coder显示标明出所有允许的类型；
+  4. 函数的参数必须显示标明类型（同情况1），但是返回类型一般也无需显示标明，除非：
+     a. 声明接口时，这时候没有面量上下文可供TS推导；
+     b. 函数内部的分支多、实现逻辑复杂时，显示标明返回类型，免得自己写错逻辑；
+
+  其余情况下基本是让TS自己基于面量上下文自动做类型推导。
+  
+* 基于面量的类型推导
+  TS会根据面量上下文自动推导出变量的类型、函数的返回类型。
+
+#+begin_src typescript
+let name1 = 'Harry';    // 自动推导为string类型
+const name2 = 'Harry'; // 自动推导为'Harry'，这是为什么？
+let name3 = 'Harry' as const;   // 同样推导为'Harry', 为什么？
+
+
+// obj1跟obj2都自动推导为：
+// {name: string; age: number;}
+let obj1 = {
+  name: 'Harry',
+  age: 17,
+};
+const obj2 = {
+  name: 'Harry',
+  age: 17,
+};
+
+// 而obj3则推导为
+// {name: 'Harry'; age: 17;}
+let obj3 = {
+  name: 'Harry',
+  age: 17,
+} as const;
+
+
+// arr1推导为 (string | number)[];
+const arr1 = ['Harry', 17];
+
+// 而arr2则推导为 readonly ['Harry', 17]，这是tuple类型
+const arr2 = ['Harry', 17] as const;
+#+end_src
+
+  TS根据面量上下文推导的时候，大概有两种推导方式：
+  1. let推导，宽泛推导，即尽量往更宽的范围去根据面量值来推导类型。例如name1、obj1、obj2、arr1的推导方式，
+  2. const推导，精准推导，基本你写了什么它就是什么类型。例如name2、name3、obj3、arr2的推导方式
+
+  说到这里，应该就知道值后面的as const的作用是什么了吧？
+
+  对于复合数据结构Array、Object，无论是用const还是let声明的变量：
+  1. 其key的推导只有const推导;
+  2. 其value的推导默认是let推导，可以用as const显示采用const推导；
+
+  上诉的规则同样适用于函数的返回值。多个return的函数，多种推导结果会组成一个Union Type。
+
+  一般情况下我们都不用在意它是let推导还是const推导，基本是无感知的。因为一个const变量，没有本来就没有变的可能，而得益于类型兼容，name1 = name2 这样的赋值又是完全合法的。
+
+* Type与Value之间的三八线
+  TS经过编译之后就是JS代码。也就是TS所附加的所有类型（Type）都会被清除，只留下“值（Value）”。这里的Value是一个很广义的概念，大概可以说属于JS的都叫值。原始值、对象、数组（本质是对象）、函数（本质也是对象）、class（本质也是对象）等等都是值。
+  在TS里，Type跟Value有很严格的分界线，二者不可混用。只不过为了方便，TS给一些Value默认赋予了同名的Type，如面量原始值、class。所以你可以有如下的使用方式：
+
+#+begin_src typescript
+// 冒号后面的这些'age', 'name', 3, false都是合法的js面量值，但是它们在这里表示的Type而不是Value
+let a: 'age' | 'name' | 3 | false = false;
+
+
+class A {
+  public name = 'Harry';
+}
+
+// 冒号后面的A是合法的js class，但是它在这里表示的是Type而不是Value
+let a: A = new A();
+  
+#+end_src
+
+  当不存在同名Type与Value的时候，你就能清晰的“看到”这条分界线，举两个例子：
+
+#+begin_src typescript
+// 例子一：尝试把Value当Type使用
+function hello(name: string) {
+  return `Hello, ${name}`;
+}
+// 我们希望再写一个箭头函数，使其类型与 hello 一致
+let b: hello = (name: string) => {  // 报错：TS2749: 'hello' refers to a value, but is being used as a type here. Did you mean 'typeof hello'?
+  return `Hi, ${name}`;
+};
+
+
+// 例子二：尝试把Type当Value使用
+
+// 复用上面的class A定义，把它放在文件A.ts里，然后在另一个文件里用import type只导入它的类型
+import type {A} from './A';
+
+// TS1361: 'A' cannot be used as a value because it was imported using 'import type'.
+let a: A = new A();  
+#+end_src
+
+  从例子一的报错提示就可以知道，我们可以用typeof Value来提取这个Value的Type。所以例一改成 `let b: typeof hello...省略` 即可。但是反过来不行，TS没有提供根据Type来生成Value的方法（最好也别提供）。
+
+  这里再说一下TS的操作符。TS有一些类型操作符跟JS的一模一样的，但是切记，它们作用于Type的时候与JS里作用与Value的时候含义不一样。我想这也是TS容易让人混淆Type与Value的关系的原因。举几个例子 ：
+  - typeof 在TS里是用来提取一个面量Value的Type，而JS里是返回一直值的字符串类型描述
+  - A | B 表示Union Type，而JS里是位运算或
+  - A & B 表示合并两个类型，而JS里是位运算与
+  - T extends B 表示限定泛型参数A必须兼容类型B，而JS里是class继承的关键字
+  
+  
+* 从面量对象提取对象keys的Union Type
+  这个很简单，也很常用。就是用[[https://www.typescriptlang.org/docs/handbook/2/typeof-types.html][keyof运算符]]来提取面量对象的类型的peoperties。
+
+#+begin_src typescript
+const size2Source = {
+    16: require('./16.png'),
+    24: require('./24.png'),
+    32: require('./32.png'),
+};
+
+interface IconPencilProps {
+    tintColor?: string;
+    size: keyof (typeof size2Source);  // size的类型就是 16 | 24 | 32，是一个Union Type。这里的括号仅为了阅读方便，可以省略。
+}
+
+const a: IconPencilProps = {
+  size: 64, // 报错： TS2322: Type '64' is not assignable to type '16 | 24 | 32'.
+};  
+#+end_src
+
+  往后当这个组件支持新尺寸的时候，修改size2Source对应props里的size的类型
+
+* 从面量对象提取对象values的Union Type (*)
+
+
+* 从面量数组提取数组值的Union Type
