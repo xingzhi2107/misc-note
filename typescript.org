@@ -260,7 +260,7 @@ let a: A = new A();
   - T extends B 表示限定泛型参数A必须兼容类型B，而JS里是class继承的关键字
   
   
-* 从面量对象提取对象keys的Union Type
+* 从面量对象提取对象keys的类型 -- keyof运算符
   这个很简单，也很常用。就是用[[https://www.typescriptlang.org/docs/handbook/2/typeof-types.html][keyof运算符]]来提取面量对象的类型的peoperties。
 
 #+begin_src typescript
@@ -282,7 +282,67 @@ const a: IconPencilProps = {
 
   往后当这个组件支持新尺寸的时候，修改size2Source对应props里的size的类型
 
-* 从面量对象提取对象values的Union Type (*)
+* 从面量对象提取对象values的类型 -- Indexed Access Types
+  TS同样可以从面量对象提某个值，或者某些值的类型。TS称之为[[https://www.typescriptlang.org/docs/handbook/2/indexed-access-types.html][Indexed Access Types]]。其方式类似于JS里访问一个对象的某个key：
+
+#+begin_src typescript
+const friend = {
+  name: 'Harry',
+  age: 17,
+  married: false,
+};
+// JS里通过点或者中括号来访问某个key，二者等价！
+console.log(friend.name);
+console.log(friend['name']);
+
+// TS也可以访问某个Type的某个Key的类型，但是不支持点语法。
+type Friend = typeof friend;
+type FriendName = Friend['name'];
+// 很显然不支持点操作是有原因的：
+type FriendNameOrAge = Friend['name' | 'age'];            // 类型为：string | number
+type FriendValues = Friend['name' | 'age' | 'married'];   // 类型为：string | boolean | number
+type FriendKeys = keyof Friend;                           // 类型为：'name' | 'age' | 'married'
+type FriendValuesV2 = Friend[FriendKeys];                 // 类型为：string | boolean | number
 
 
-* 从面量数组提取数组值的Union Type
+// 这个语法对Array、Tuple同样适用
+const queryKeys = ['page_source', 'ut', 'utm_source', 'media'];
+type QueryKeys = typeof queryKeys;
+type FirstQuery = QueryKeys[0];   // 类型是string
+type SecondQuery = QueryKeys[1];  // 类型依然是string
+
+const queryKeys2 = ['page_source', 'ut', 'utm_source', 'media'] as const;
+type QueryKeys2 = typeof queryKeys2;
+type FirstQuery2 = QueryKeys2[0];   // 类型是'page_source'
+type SecondQuery2 = QueryKeys2[1];  // 类型是'ut'
+type AllQuery2Values = QueryKeys2[number];  // 类型是 'page_source' | 'ut' | 'utm_source' | 'media'
+#+end_src
+
+* 把水舀出来再倒回去 -- Mapped Types
+  我们已经学会提取对象的keys跟values的类型的方法，现在让我们来干件把水舀出来再到倒回去的蠢事。
+
+#+begin_src typescript
+const friend = {
+  name: 'Harry',
+  age: 17,
+  married: false,
+};
+
+// 这是水
+type Friend = typeof friend;
+
+// 把水舀出
+type FriendKeys = keyof Friend;
+type FriendValues = Friend[FriendKeys];
+
+// 把水倒回
+type Friend2 = {
+  [k in FriendKeys]: Friend[k];
+}
+
+// Friend2 完全等价于 Friend
+const a: Friend2 = friend;
+  
+#+end_src
+
+
