@@ -211,6 +211,9 @@ const arr2 = ['Harry', 17] as const;
 
   一般情况下我们都不用在意它是let推导还是const推导，基本是无感知的。因为一个const变量，没有本来就没有变的可能，而得益于类型兼容，name1 = name2 这样的赋值又是完全合法的。
 
+** 泛型基于面量推导
+  在使用泛型的时候，TS也会基于面量上下文进行推导。举个例子，我们来实现一个简陋版的lodash.keyBy。keyBy的经典用法是：lodash.keyBy([{id: 1, name: 'Harry'}, {id: 2, name: 'Lili'}], 'id')，这样就可以得到一个以id为key的mapping。
+
 * Type与Value之间的三八线
   TS经过编译之后就是JS代码。也就是TS所附加的所有类型（Type）都会被清除，只留下“值（Value）”。这里的Value是一个很广义的概念，大概可以说属于JS的都叫值。原始值、对象、数组（本质是对象）、函数（本质也是对象）、class（本质也是对象）等等都是值。
   在TS里，Type跟Value有很严格的分界线，二者不可混用。只不过为了方便，TS给一些Value默认赋予了同名的Type，如面量原始值、class。所以你可以有如下的使用方式：
@@ -345,4 +348,30 @@ const a: Friend2 = friend;
   
 #+end_src
 
+  TS把Friend2的定义方式（类型）称之为Mappend Types。把它的结构用伪代码表示就好理解了：
+
+#+begin_src typescript
+type Friend2;
+
+for (const k in FriendKeys) {
+    Friend2[key] = Friend[k]
+}
+#+end_src
+
+  上面的伪代码跟JS中经典的复制对象代码很像，所谓的Mappend Types也就是这么一回事。
+
+* 类型体操
+  上面讲了TS的类型、以及对象类型的几个基本操作，有了这两个概念之后，再结合TS提供的一些工具类型，我们就可以做一些简单的类型体操。
+
+  比较有用的工具类型：
+  - ReturnType<Function>与Parameters<Function>，用来提取函数的返回值类型与参数类型。如果还在用redux（最好别用），可以用ReturnType来获取connect redux所得到的props类型，类似这样： ~type Props = OwnProps & ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchToProps>;~
+  - Pick<Type, Keys> 与 Omit<Type, Keys>，用来提取或者剔除某个类型的key。比如，可以用Pick从Entry衍生出对应的创建表单的类型：Pick<Topic，'title' | 'content' | 'group_id'>
+  - Partial<Type>与Required<Type>，用来加上或者移除optional修饰符。比如，可以用Partial从Entry衍生出对应的修改表单的类型：Partial<Topic, 'title' | 'content'> & Pick<Topic, 'id'>
+  - Extract<Type, Union> 与 Exclude<UnionType, ExcludedMembers> ，用来提取或者过滤类型。
+  - Readonly<Type>，用来给每个属性加上readonly修饰符
+
+  还有一些操作
+
+
+** 题目一：给entry加上
 
