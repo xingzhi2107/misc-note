@@ -214,6 +214,24 @@ const arr2 = ['Harry', 17] as const;
 ** 泛型基于面量推导
   在使用泛型的时候，TS也会基于面量上下文进行推导。举个例子，我们来实现一个简陋版的lodash.keyBy。keyBy的经典用法是：lodash.keyBy([{id: 1, name: 'Harry'}, {id: 2, name: 'Lili'}], 'id')，这样就可以得到一个以id为key的mapping。
 
+#+begin_src typescript
+function myKeyBy<T>(arr: T[], key: string) {
+  const mapping: Record<string, T> = {};
+
+  for (const item of arr) {
+    const keyVal = (item as any)[key];
+    mapping[keyVal] = item;
+  }
+
+  return mapping;
+}
+
+const student = [{name: 'Harry', age: 17}, {name: 'Close', age: 21}];
+const mapping = myKeyBy(student, 'name');
+mapping.Close!;  // 类型是 {name: string; age: number} | {name: string; age: number;}，这个类型就是泛型T，是TS自己根据传入myKeyBy的参数的类型推导出来的。
+#+end_src
+
+
 * Type与Value之间的三八线
   TS经过编译之后就是JS代码。也就是TS所附加的所有类型（Type）都会被清除，只留下“值（Value）”。这里的Value是一个很广义的概念，大概可以说属于JS的都叫值。原始值、对象、数组（本质是对象）、函数（本质也是对象）、class（本质也是对象）等等都是值。
   在TS里，Type跟Value有很严格的分界线，二者不可混用。只不过为了方便，TS给一些Value默认赋予了同名的Type，如面量原始值、class。所以你可以有如下的使用方式：
