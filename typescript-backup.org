@@ -228,192 +228,12 @@ function myKeyBy<T>(arr: T[], key: string) {
 
 const student = [{name: 'Harry', age: 17}, {name: 'Close', age: 21}];
 const mapping = myKeyBy(student, 'name');
--mapping.Close!;  // 类型是 {name: string; age: number} | {name: string; age: number;}，这个类型就是泛型T，是TS自己根据传入myKeyBy的参数的类型推导出来的。
+mapping.Close!;  // 类型是 {name: string; age: number} | {name: string; age: number;}，这个类型就是泛型T，是TS自己根据传入myKeyBy的参数的类型推导出来的。
 #+end_src
 
-** 动态推导
-  除了静态面量推导，TS还支持简单的动态推导，其实就是根据可信的判断做排除法，TS称这个过程为Narrowing。这些可信的判断，TS称之为predicate。思考下t1 ~ t5分别是什么类型：
+** 简单的动态推导
+  除了
 
-#+begin_src typescript
-function printVal(val: number | string | boolean | null) {
-  if (val === null) {
-    // t1, 此处val是什么类型？
-  } else if (typeof val === 'number') {
-    // t2, 这里的val是类类型？
-  } else  if (typeof val === 'string') {
-    // t3
-  } else if (typeof val === 'boolean') {
-    // t4
-  } else {
-    // t5
-  }
-}  
-#+end_src
-
-  上面代码的可信判断，就是js里的typeof、===，这两个是比较常用的。除此之外，还有in、instanceof、switch...case等。这些都是内建的predicate，你也可以实现一个自己的predicate，例如：
-
-#+begin_src typescript
-function isNil(val: any): val is (null | undefined) {
-  return val === null || val === undefined;
-}
-
-let a: null | string;
-if (!isNil(a)) {
-  a = a.toLowerCase(); // TS能通过!isNil(a)判断出，a在这里一定是string
-}
-
-const arr = [3, 4, 5, 6, null];
-#+end_src
-
-  这里举两个跟Narrowing相关的经典例子。
-
-*** 例子一：渲染聊天信息
-
-#+begin_src typescript
-// 用Enum定义出聊天消息的类型，方便写TS Narrowing，以及方便后续使用
-enum MessageType {
-  Text = 'text',
-  Image = 'image',
-  Video = 'video',
-  Voice = 'voice'
-}
-
-// 每种消息类型都带有一个type字段，也是为了方便TS Narrowing，然后将他们联合成一个新类型Message
-type Message = TextMessage | ImageMessage | VideoMessage | VoiceMessage;
-
-interface TextMessage {
-  type: MessageType.Text;
-  summary: string;
-  markdown_text: string;
-}
-
-interface ImageMessage {
-  type: MessageType.Image;
-  thumbnail_url: string;
-  url: string;
-  width: number;
-  height: number;
-}
-
-interface VideoMessage {
-  type: MessageType.Video;
-  video_url: string;
-  duration: number;
-  cover_image_url: string;
-  width: number;
-  height: number;
-}
-
-interface VoiceMessage {
-  type: MessageType.Voice;
-  voice_url: string;
-  duration: number;
-}
-
-function renderMessageItem(item: Message) {
-  switch (item.type) {
-    case MessageType.Text:
-      // message的类型是MessageText
-      // 后续的分支以此类推
-      item.markdown_text
-      break;
-    case MessageType.Image:
-      item.thumbnail_url
-      break;
-    case MessageType.Video:
-      break;
-    case MessageType.Voice:
-      break;
-    default:
-      break;
-  }
-}
-#+end_src
-
-  每种message都加个type字段的做法并不是必须的，你也可以不要这个字段，然后把switch换成几个if-else，用in来判断。只是这样做会很费力。
-
-*** 例子二：实现一个类型完备的Pub/Sub
-  先描述出这个Pub/Sub的样子：
-
-#+begin_src typescript
-class PubSub {
-  static publish(eventName: string, eventData: any) {
-  }
-  
-  static subscribe(eventName: string, callback: (eventData: any) => void) {
-  }
-}  
-#+end_src
-
-  这样的一个Pub/Sub，对eventName、eventData的约束非常的小，随着时间的推移，就很容易出现下面这种不自信的代码：
-#+begin_src typescript
-// publish的时候，你没办法直观的知道要publish一个什么样的eventData，这时候就需要去搜索之前用到这个事件的例子
-// PubSub.publish(PubSubEvents.REPLY_CREATED, 
-
-// subscribe的时候，要小心翼翼，写一堆防御代码
-PubSub.subscribe(PubSubEvents.REPLY_CREATED, (data?: {reply?: Reply}) => {
-  if (
-    data &&
-    data.reply &&
-    data.reply.id
-  ) {
-     // 安全了~
-  }
-});
-#+end_src
-
-  我们可以用函数重载来实现类型的完备：
-#+begin_src typescript
-// 同样，我们也给eventName定义一个Enum
-enum PubSubEvents {
-  AppLaunched = 'AppLaunched',
-  FieldValueChanged = 'FieldValueChanged',
-}
-
-// 再定义下EventData的类型
-interface AppLaunchedEvent {
-  open_source: string;
-}
-interface FieldValueChangedEvent {
-  name: string;
-  oldVal: any;
-  newVal: any;
-  source: 'init' | 'user-input' | 'user-press-clear';
-}
-
-
-class PubSubV2 {
-  // 然后用函数重载，把eventName跟对应的EventData类型一一对应起来，就好像在写switch语句
-  static publish(eventName: PubSubEvents.AppLaunched, eventData: AppLaunchedEvent): void;
-  static publish(eventName: PubSubEvents.FieldValueChanged, eventData: FieldValueChangedEvent): void;
-  static publish(eventName: PubSubEvents, eventData: any): void {
-  }
-
-  static subscribe(eventName: PubSubEvents.AppLaunched, callback: (eventData: AppLaunchedEvent) => void): void;
-  static subscribe(eventName: PubSubEvents.FieldValueChanged, callback: (eventData: FieldValueChangedEvent) => void): void;
-  static subscribe(eventName: PubSubEvents, callback: (eventData: any) => void): void {
-  }
-}
-
-// publish事件的时候，如果乱写event data，会被TS拦住
-// TS报错：'open_source__' does not exist in type 'AppLaunchedEvent'. Did you mean to write 'open_source'?
-PubSubV2.publish(PubSubEvents.AppLaunched, {
-  open_source__: 'push_notification_3200',
-});
-// TS报错：Argument of type 'null' is not assignable to parameter of type 'AppLaunchedEvent'.
-PubSubV2.publish(PubSubEvents.AppLaunched, null);
-
-// 订阅事件的时候，TS会根据eventName自动推导出eventData，不需要自己去加类型说明
-PubSubV2.subscribe(PubSubEvents.AppLaunched, (event) => {
-  console.log(event.open_source);
-});  
-#+end_src
-
-
-
-
-  
-  
 * Type与Value之间的三八线
   TS经过编译之后就是JS代码。也就是TS所附加的所有类型（Type）都会被清除，只留下“值（Value）”。这里的Value是一个很广义的概念，大概可以说属于JS的都叫值。原始值、对象、数组（本质是对象）、函数（本质也是对象）、class（本质也是对象）等等都是值。
   在TS里，Type跟Value有很严格的分界线，二者不可混用。只不过为了方便，TS给一些Value默认赋予了同名的Type，如面量原始值、class。所以你可以有如下的使用方式：
@@ -560,76 +380,18 @@ for (const k in FriendKeys) {
 
   上面的伪代码跟JS中经典的复制对象代码很像，所谓的Mappend Types也就是这么一回事。
 
-* 类型工具
-  上面讲了TS的类型、以及对象类型的几个基本操作，有了这两个概念之后，再结合TS提供的一些工具类型，我们就可以做一些简单的类型变换。
+* 类型体操
+  上面讲了TS的类型、以及对象类型的几个基本操作，有了这两个概念之后，再结合TS提供的一些工具类型，我们就可以做一些简单的类型体操。
 
   比较有用的工具类型：
   - ReturnType<Function>与Parameters<Function>，用来提取函数的返回值类型与参数类型。如果还在用redux（最好别用），可以用ReturnType来获取connect redux所得到的props类型，类似这样： ~type Props = OwnProps & ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchToProps>;~
-  - Pick<Type, Keys> 与 Omit<Type, Keys>，用来提取或者剔除某个类型的key。比如，可以用Pick从Entry衍生出对应的创建表单的类型：Pick<Topic，'title' | 'content' | 'group_id'>，或者Omit<Topic, 'id' | 'time_created' | 'time_removed' | 'time_modified'>
+  - Pick<Type, Keys> 与 Omit<Type, Keys>，用来提取或者剔除某个类型的key。比如，可以用Pick从Entry衍生出对应的创建表单的类型：Pick<Topic，'title' | 'content' | 'group_id'>
   - Partial<Type>与Required<Type>，用来加上或者移除optional修饰符。比如，可以用Partial从Entry衍生出对应的修改表单的类型：Partial<Topic, 'title' | 'content'> & Pick<Topic, 'id'>
   - Extract<Type, Union> 与 Exclude<UnionType, ExcludedMembers> ，用来提取或者过滤类型。
   - Readonly<Type>，用来给每个属性加上readonly修饰符
 
-  掌握到这里就差不多打住了！如果你不是要写TS库函数，大部分时候也就够用了。如果你用的框架比较OOP，比如Angular、nestjs，那可以再深入了解class、decorator、ThisType等知识点。
-
-* 建议：定义好数据的类型
-  数据的结构基本是外部输入了，我们一般可以直接根据DB的表结构来定义这类数据的类型。以Topic与Reply为例来说明。
-
-#+begin_src typescript
-interface EntryBase {
-  id: string;
-  time_created: number;
-  time_modified: number;
-  time_removed: number;
-}
-
-interface Topic extends EntryBase {
-  // DB字段，都是DB里一一对应的
-  title: string;
-  content: string;
-  user_id: string;
-  group_id: string;
-  flags: number;
-
-  // 接着是一堆扩展字段
-
-  // 为了方便，服务端会直接patch一些简单的关联字段
-  group?: Group;
-  author?: User;
-  replies?: Reply[];
-  options?: Array<PollOption>;
-
-  // 与当前用户有关的字段。
-  vote_index?: number;
-  liked?: boolean;
-  disliked?: boolean;
-  bookmarked?: boolean;
-
-  // 搜索页面用到的，搜索关键字匹配到的高亮字段
-  highlight?: {
-    title?: Array<string>;
-    content?: Array<string>;
-  };
-}
-
-interface Reply extends EntryBase {
-  // 基本字段
-  topic_id: string;
-  content: string;
-  user_id: string;
-  reply_to: string;
-
-  // 同样是一些扩展字段
-  topic?: Topic;
-  goods?: any;
-  replies?: Reply[];
-}  
-#+end_src
-
-  个人认为，数据结构的定义最好分为如下几类，然后分开定义：
-     a. Entry，字段基本等同于DB表结构外加一些非常基础的扩展字段；
-     b. View类，在Entry的基础，加上一些跟当前UI相关的字段，这个也取决于API如何设计；
-     c. 表单类，这类基本就是Entry的子集；
+  还有一些操作
 
 
-* 建议：多用any与as T
+** 题目一：给entry加上
+
