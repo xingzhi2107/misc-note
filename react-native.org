@@ -181,3 +181,23 @@
   默认情况下，当用户点击TextInput以外的区域的时候，会让TextInput失去焦点，并且会让Keybaord隐藏起来。但是有些事时候，我们不希望有这样的默认行为。比如，点击了某个按钮之后会修改TextInput的内容，用户需要继续编辑。
 
   上面所说的需求，RN是可以实现的。但是前提是这个组件是被ScrollView包裹着的，这样就可以用ScrollView的[[https://reactnative.dev/docs/scrollview#keyboardshouldpersisttaps][keyboardShouldPersistTaps]]属性来控制。看了RN的这个issue的[[https://github.com/facebook/react-native/issues/4229#issuecomment-167069887][回答]]之后，我觉得他说得很有道理，RN应该提供更细粒度的控制能力。总不能每次为了点击不隐藏键盘，都要用一个ScrollView包裹起来吧？目前的这种方案太取巧了。
+
+* Shadow
+  RN的Shadow也是坑多。ios跟android的shadow机制也不一样。
+
+  在Android中，RN只能通过elevation属性控制阴影，它与android native的[[https://developer.android.com/develop/ui/views/theming/shadows-clipping][elevation]]是一致的。注意！这个属性还有zIndex效果，数值高了就会悬浮到顶部。
+
+  而在ios中，RN通过如下四个属性控制阴影：
+
+#+begin_src 
+          shadowColor: 'black', // 控制阴影的颜色
+          shadowOffset: {       // 控制阴影的2d偏移
+            width: 0,
+            height: 0,
+          },
+          shadowOpacity: 0.2,   // 第一个坑：默认是0。不设置，阴影就看不到。控制阴影颜色的不透明度，会乘以shadowColor的不透明度。
+          shadowRadius: 15,     // 控制阴影的模糊度
+          background: 'white',  // 第二个坑：要给元素设置一个背景色，不然阴影也会看不到。
+#+end_src
+
+
