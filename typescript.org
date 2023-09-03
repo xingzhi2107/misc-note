@@ -633,3 +633,46 @@ interface Reply extends EntryBase {
 
 
 * 建议：多用any与as T
+
+* Awaited的使用体验
+  看到Awaited的时候，我设想是不是可以在接口请求的地方直接用as 定义好数据面量，然后后续所有使用的地方都可以通过Awaited计算出数据结构的类型信息。就像这样：
+
+#+begin_src typescript
+// 请求层
+class APIClient {
+  static getCommunityOnboardingLocationGroupInfo = async () => {
+    const url = '/xxx/yyy';
+    const res = await APIClient.get(url);
+
+    return res as {
+      geo: {
+        country: string;
+        state: string;
+        city: string;
+      };
+      group_infos: {
+        group_info: OnboardingLocationGroupInfo | null;
+        states: Record<
+          string,
+          {
+            group_info: OnboardingLocationGroupInfo | null;
+            cities: Record<string, OnboardingLocationGroupInfo>;
+          }
+        >;
+      };
+      allow_skip: boolean;
+    };
+  };
+}
+
+// 具体页面
+type PageConfig = PickAPIResType<typeof APIClient.getCommunityOnboardingLocationGroupInfo>;
+
+type GroupInfo = PageConfig['group_infos']['group_info'];
+type GroupInfoMapping = PageConfig['group_infos'];
+#+end_src
+
+  用了几次之后，感觉体验一般般，每次跳转到定义的时候，都不太能很快的看到整个结构的全貌，有时候要辗转几次才能到达定义的位置。对比一开始把接口的结构描述在typing里然后一跳转的就能看到全貌的体验，Awaited的体验还是差一些。说起来，这是所有类型体操的通病。
+  
+
+
