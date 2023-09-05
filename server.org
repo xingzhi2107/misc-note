@@ -9,3 +9,6 @@
 一种划分思路，从 Post / Comment 这两个资源的生命周期，依赖关系，聚合关系出发。
 比如一个 Comment 一定仅是出现并关联在一个具体的 Post 上，不能完全创建的话，那就是 /posts/:postId/comments
   #+end_quote
+
+* HTTP Method
+  - 502 Bad Gateway :: 它表示作为网关或代理的服务器，从 **上游服务器** 中接收到的响应是无效的。比如nginx代理的server挂了（nginx本身没挂）。
