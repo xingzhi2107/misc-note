@@ -1,0 +1,6 @@
+#+TITLE: Flutter
+
+* Dart语法学习 -- 以JavaScript/TypeScript的视角
+** 变量
+** 没有“文件作用域”
+  初次写了一个class，然后直接再文件作用域里直接去new，却发现各种提示不对，放进main函数里就可以正常使用。这大概是因为dart不允许直接再文件作用域里写逻辑。
