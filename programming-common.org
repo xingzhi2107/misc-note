@@ -128,3 +128,7 @@ Bl+4wg3rZePy7sEPumHt
   - 请求分为两步：
     1. fetch premium config
     2. 拿到premium config，再去Store请求价格
+
+* 信息完整性
+  最近写了一个mapping，没有把key也放在value里，结果遍历value的时候需要用到key！然而，这个mapping是一个多层嵌套，临时去取key还真的麻烦。当时生成这个mapping的时候，就应该把key也放在value里。这种行为虽然有点信息冗余，但是在需要的时候就能方便使用。
+
