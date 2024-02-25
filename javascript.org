@@ -339,6 +339,7 @@
 #+BEGIN_SRC javascript
   function cb1(data, nextCb) {
       // 做一些事情
+  
       // 异步操作，注册nextCb
   }
 #+END_SRC
