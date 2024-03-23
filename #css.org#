@@ -1,0 +1,809 @@
+#+TITLE: CSS 学习笔记
+
+* 前言
+  个人的CSS水平实在太烂了，我决定重新梳理一遍css的知识，同时进行 =daily css production= 。梳理知识的目的在于找到更好的 =知识树= ，而实践的目的在于css技能的 =保持活性= 。
+
+* Element Selector
+** 官方的Attribute Selector的分类
+   我觉得[[https://developer.mozilla.org/en-US/docs/Learn/CSS/Introduction_to_CSS/Attribute_selectors][MDN]]/[[https://www.w3.org/TR/selectors-3/#attribute-selectors][Selector-3]]对 =Attribute Selector= 分类很合理 大致可以分层两类：
+
+   1. Attribute presence and value selector - 切确字符类
+
+   2. Substring matching attribute selectors - 字符子串匹配类
+
+   第一种用来匹配切确的字符（属性），而第二类有点像正则表达式（但又不是）用来匹配子串。
+
+*** Attribute presence and value selector
+    这个分类的属性选择器有：
+
+    - [att] :: =存在= att这个属性的元素
+    - [att=val] :: 存在att这个属性，并且值 =为= val的元素
+    - [att~=val] :: 存在att这个属性，并且值是由空白字符分割开的一串单词， =其中一个= 单词是val的元素
+
+*** Substring matching attribute selector
+    - [att^=val] :: 存在att这个属性，并且值是以val =开头= 的元素，这很RegExp
+    - [att$=val] :: 存在att这个属性，并且值是以val =结尾= 的元素，这很RegExp
+    - [att*=val] :: 存在att这个属性，并且值 =存在子串是val= 的元素，这也还算比较RegExp
+
+** 我的Attribute Selector分类
+   在记录上面的“官方”分类的时候，我故意遗漏了 =[att|=val]= 属性选择器，这是因为我对官方的分类方式不是很赞同。
+
+*** 特殊的[att|=val] selector
+    先说说其定义：存在att这个属性，并且值是以val开头 =或以val-= 开头的元素，这不是那么RegExp。初看很容易让人以为这个选择器跟 =[att^=val]= 没有什么区别，但令人猝不及防的是，它夹带了私货—— =“或以val-”开头= ，这样一条额外的定义。
+    W3的[[https://www.w3.org/TR/selectors-3/#attribute-selectors][Selector Level 3]]文档将其划分为第一类，Attribute presence and value selector。而MDN的[[https://developer.mozilla.org/en-US/docs/Learn/CSS/Introduction_to_CSS/Attribute_selectors][Attribute Selector]]文档则将其划分为第二类，Substring matching attribute selector。说到底还是这个选择器太让人迷惑了，为什么有了 =[att^=val]= 还需要一个 =[att|=val]= ？
+    简单的说，我个人认为属性选择器需要第三个分类：特殊属性选择器。它们因为特殊的目的、特殊的使用场景而存在。同时，我个人认为， =[att|=val]= 跟 =[att~=val]= 这两个选择器都应该分属此类。
+    从官方的定义，我们很容易知道这个属性选择器其实是为了匹配语言用的，比如我们希望语言是中文的时候应用某些特殊的css。但是中文的code有几种？从这份[[http://www.lingoes.cn/zh/translator/langcode.htm][语言代码表]]中可以看出有6种。那么如果没有 =[att|=val]= 这个选择器，我们需要这么写：
+
+    #+BEGIN_SRC css
+
+      [lang="zh"], [lang^="zh-"] {
+          /* ba la ba la */
+      }
+
+    #+END_SRC
+
+    个人推测估计组委会的人觉得，这样太麻烦太ugly了，于是创造了 =[att|=val]= 这种“语法糖”来“fix”这种繁琐的操作。然而，这种少几个字符的改进，却给我们带来了认知困惑，真是得不偿失！个人认为，还不如单独为语言选择创造一种选择器好了，把这种特殊“具名化”，让人一眼就知道其目的性，反倒不容易跟那些“原子性”的属性选择器混淆。 =:lang()= 这个伪类选择器貌似是用来弥补这种认知bug的，但是要小心它们之间是不一样的，详见[[https://www.w3.org/TR/selectors-3/#lang-pseudo][:lang伪类]]。
+
+    个人再作进一步推测，为什么 =[att|=val]= 这个选择器的标识符是竖线"|"。我估计，这是因为正则表达式里，“或” 是用 "|" 表示的。希望对记忆这个选择器的“样子”有帮助。
+
+*** 对[att~=val]存在目的的推测
+    =[att|=val]= 的目的是匹配lang属性，那么 =[att~=val]= 的目的又是什么呢？它真的跟 =[att*=val]= 很像啊！不是吗？为什么它也被划分在第一类属性选择器里？
+    说真的，我没有什么头绪。唯一能想到的，就是匹配class。我们可以用 =[att~=val]= 来模拟类选择器，大致如下：
+
+    #+BEGIN_SRC css
+
+      [class~="btn"] {
+          /* 定义 */
+      }
+
+      .btn {
+          /* 定义 */
+      }
+    #+END_SRC
+
+    但是已经有了类选择器来，再造出这样一个选择器来略显多余。唯一的可能就是确实存在类似class属性的过滤需求，但是其属性名又不是class。当然，我目前没有想到。
+*** 最终结果
+    所以，我对属性选择器的最终分类为：
+
+    1. 非类RegExp属性选择器 :: [att] [att=val]
+    2. 类RegExp属性选择器 :: [att^=val] [att$=val] [att*=val]
+    3. 特殊目的属性选择器 :: 语言属性选择器 [att|=val]，类名属性选择器 [att~=val]
+
+    这样，我们就不用去纠结 =[att|=val]= 与 =[att^=val]= 的区别，以及 =[att~=val]= 与 =[att*=val]= 的区别了
+** Pseudo-class and pseudo-element
+   Pseudo-class以及pseudo-element与其它选择器有什么区别？我的理解是，pseudo-selector提供的能力，更像是原本只能由js来实现，而现在css进行了“原生实现”。它们讨论的，更多的是关于“状态”，而不是元素本身的DOM Tree结构。我有一种感觉，也许是错觉，那就是CSS3在选择器方面的“能力”扩展，基本都是在preudo-selector这个类别里扩展的。
+   去讨论pseudo-class与pseudo-element的区别貌似没有什么意义（尤其是::selection也归类为pseudo-element之后），而且也不是重点。我觉得pseudo-class与pseudo-element的重点在于 =了解= 各个选择器的定义作用， =归类分组= 各个选择器以帮助记忆。我觉得，这个方面[[https://www.w3.org/TR/selectors-3/#pseudo-classes][《Selector Level 3》]]已经做得很好了！这里，无需再搬运过来。
+   如果有什么值得记录，那应该就是还有一些零碎的容易混淆的点，可能需要特别去理清楚。这里就着重讨论这些吧！
+
+*** :nth-child() vs :nth-of-type()
+    =:nth-child()= 应该是很好理解的，就是“第几个子元素”的意思。然而，实际上并非那么简单！到底是哪些元素中的 =Tn+X= 个呢？我们直接上结果：
+
+    - SelectorA:nth-child(Tn+X) :: 是从SelectorA所选中的元素所在的 =那一层的所有元素= 的Tn+X，同层计算。
+    - SelectorA:nth-of-type(Tn+X) :: 是从SelectorA所选中的元素中的Tn+X，同层计算。
+
+    同层计算是什么意思呢？先看代码：
+
+    #+BEGIN_SRC web
+      <style>
+       .list>.list-item {
+           background-color: red;
+       }
+      </style>
+
+      <ul class="list" id="l1">
+          <li class="list-item">abc</li>
+          <li class="list-item">hehe</li>
+          <li class="list-item">haha</li>
+          <li class="list-item">keke</li>
+          <hr class="list-dividline"/>
+          <li class="list-item">lele</li>
+      </ul>
+
+
+      <ul class="list" id="l2">
+          <li class="list-item">abc</li>
+          <li class="list-item">hehe</li>
+          <li class="list-item">haha</li>
+          <li class="list-item">keke</li>
+          <hr class="list-dividline"/>
+          <li class="list-item">lele</li>
+      </ul>
+    #+END_SRC
+
+    对于上述代码， ~.list>.list-item {}~ 匹配的是什么？是.list下的直接子元素.list-item。 ~#l1~ 下的 ~.list-item~ 为同一层，而 ~#l2~ 下的 ~.list-item~ 为另一层。每个层自己计算Tn+X，就是同层计算。
+    你可以给选择器加上nth-child或者nth-of-type的伪类修饰，来看看会有什么结果。我以前以为，只要看看两个不同的结果就很好记忆它们之间的区别了！然而，时间一长就又会忘记。css这样“死记硬背”的东西，实在让人抓狂。于是，我想到了一种转换记忆的方式。那就是用代码来记忆二者的区别。
+    假设我们要实现浏览器的渲染引擎，让你来实现 =:nth-child()= 跟 =:nth-of-type()= 的逻辑，应该如何实现呢？我们这里不考虑上面所说的“层”的问题，假定一个选择器只会有一个层匹配。那么设，选择器原本匹配到的元素叫 ~candidateElemetns~，加上 =nth-child或nth-of-type= 修饰后匹配到的元素叫做 ~targetElements~，看如下js伪代码：
+
+    #+BEGIN_SRC javascript
+
+      /**
+       ,* 获取某个原始选择器选中的元素
+       ,*
+       ,* @selector 原始选择器，指没有带伪类的选择器，如上文的'.list > .list-item'
+       ,* @return 符合选择器的元素，这里假设都在同一层
+       ,*/
+      function getCandidateElements(selector) {
+          // ...
+      }
+
+      /**
+       ,* 根据周期规则，获取匹配到的元素的函数 
+       ,*
+       ,* @elements 元素数组
+       ,* @rule 规则，如'2n+1', 或'2n+0' 这样
+       ,* @return 符合规则的元素
+       ,*/
+      function getRoundMatchElements(elements, rule) {
+          // ...
+      }
+
+      /**
+       ,*  获取原始选择器:nth-of-type(rule)的元素
+       ,*
+       ,* @selector 原始选择器，指没有带伪类的选择器，如上文的'.list > .list-item'
+       ,* @rule nth-of-type的规则，如'2n + 1'
+       ,* @return 符合规则的元素
+       ,*/
+      function getNthOfTypeElements(selector, rule) {
+          // 获取原始选择器匹配到的元素
+          const candidateElements = getCandidateElements(selector);
+
+          // 直接拿原始选择器匹配到的元素去作Tn+X的规则匹配
+          const targetElements = getRoundMatchElements(candidateElements, rule);
+
+          return targetElements;
+      }
+
+
+      /**
+       ,*  获取原始选择器:nth-child(rule)的元素
+       ,*
+       ,* @selector 原始选择器，指没有带伪类的选择器，如上文的'.list > .list-item'
+       ,* @rule nth-child的规则，如'2n + 1'
+       ,* @return 符合规则的元素
+       ,*/
+      function getNthChildElements(selector, rule) {
+          // 获取原始选择器匹配到的元素
+          const candidateElements = getCandidateElements(selector);
+          const candidateElementsSet = new Set(candidateElements); // 转换为set，备用
+
+          // 获取candidateElemtn元素所在层的“所有”元素，包含自己
+          const sidbingsElements = getSidbingsElements(candidateElements[0]);
+          // 用那一层的“所有元素”，去作Tn+X的规则匹配，获取到匹配中的元素
+          // 这是nth-child与nth-of-type的区别所在！匹配规则的范围不一样
+          const matchRoundRuleElements = getRoundMatchElements(sidbingsElements, rule);
+
+          // 最后，再从匹配到的元素中过滤出candidateElement，其结果就是targetElements
+          const targetElements = matchRoundRuleElements.filter((element) => {
+              return candidateElementsSet.has(element);
+          });
+
+          return targetElements;
+      }
+    #+END_SRC
+
+    看完代码之后你会发现，其实 =nth-of-type= 是简单的，而 =nth-child= 的规则反而是复杂的。它们的共同点在于，匹配出来的元素都必须是原始selector选中的元素。不同点在于： =nth-of-type= 直接以原始selector选中的元素进行Tn+X的规则匹配，而 =nth-child= 则比较麻烦，它用的是元素所在层的所有元素进行规则匹配的。
+
+*** Tn+X 的规则描述
+    =:nth-child(Tn+X)= 的规则的描述能力还是算强大的。但是其规则是怎样的呢？W3c用了编程语法的方式描述出来，实在有点看不懂。我们将其描述为数学语言，可能会好一些。设，公式为： ~N(n)=Tn + X~，其中：
+    1. N(n) 为公式的计算结果，表示表示第几个，为整数，且N(n) > 0
+    2. T 重复周期，必须为整数（所以，可以为负数）；
+    3. X 为起始偏移量，必须为整数，对结果N(n)有影响
+    4. n必须为自然数，即 0, 1, 2, 3...
+    满足上述条件的所有n的N(n)，即为要选择的元素。
+
+    我们来解读几个：
+
+    - xx:nth-child(7) :: T = 0, X = 7, n的可取值为整个自然数集，但是N(n)的结果集为 {7}，所以nth-child(7)就表示xx的第7个元素
+    - xx:nth-child(2n + 1) :: T = 2, X = 1, n的可取值为整个自然数集，N(n)的结果集为 {1, 3, 5 ... 7}，也就是“奇自然数”，所以nth-child(2n + 1)就表示...
+    - xx:nth-child(2n + 3) :: T = 2, X = 3，n的可取值为整个自然数集，N(n)的结果集为 {3, 5, ...7 }，也就是3以后包括3的“奇自然数”，所以nth-child...
+    - xx:nth-child(-n + 3) :: T = -1, X = 3, n的可取值为{0, 1, 2}, N(n)的结果集为 {1, 2, 3}，所以nth-child:(-n + 3)....
+    - xx:nth-child(n + 15) :: T = 1, X = 15, n的可取值为曾哥自然数集，N(n)的结果为 {15, 16, 17....}，所以nth-child
+    - xx:nth-child(n + 3):nth-child(-n + 15) :: N(n)的结果集是 {3, 4, 5, 6...13, 14, 15}，为什么？下文解答
+
+    对于最后一个选择器，如果分成 =xx:nth-child(n + 3)= 与=xx:nth-child(-n + 15)= 应该都是很容易解读。但是，合在一起之后呢？这样，我们现介绍一下css选择器的组合规则：
+
+    1. css选择器在组合的时候，选择器之间“相连”表示“并且”，如 =.list-item.active= 表示有.list-item同时也有.active class的元素
+    2. “单纯只有空格”表示“后代组合”，如 ~.list .list-item~ 表示祖代（可能是父元素，也可能是父元素的父元素）是.list的.list-item
+    3. 用“>”连接，表示“之间子代”，如~.list > .list-item~，略
+
+    所以，=xx:nth-child(n+3):nth-child(-n+15)= 表示的是并集。
+
+    最后，再回过头来看Tn+X的规则，不知道是否有清晰一些？我觉得，即便记不住也没事，这种东西翻翻文档就很容易查到。最关键的是，要知道Tn+X的表示什么？它不是只能表示周期序列，它也能给这个周期序列加上范围限定。
+
+*** :lang(zh) vs [lang="zh"]
+    简单的说，~:lang(zh)~ 是当元素处于"zh"语系的时候会应用对应的css。特别注意：这时候此元素未必需要有[lang="zh"]这个属性。也就是说，如果只有body定义了lang属性，即 ~<body lang="zh">~ ，那么body下的所有元素都满足 ~:lang(zh)~ 下的规则。而 ~[lang="zh"]~ ，则只能匹配到 ~body~ 这个元素。
+
+** Combinators and groups of selector
+   选择器的组合与“组”（我不知道这个怎么翻译更好），上面其实已经讲到了，这里面似乎没有什么好讲的。这里，我能想到的讨论点，当然也是“超纲”的点，就是[[http://oocss.org][OOCSS]]这种方法论提倡少用“后代组合器”，即选择器尽量与特定的HTML结构无关，详见这篇[[http://bubkoo.com/2015/06/25/css-methodologies/][博客]]。
+   关于CSS方法论，我想说的是，“尽信书，不如无书”吧！
+
+** Calculating a selector's specificity
+   如何计算一个选择器的“特殊性”？这一部分看下文档还是很简单的，但是这个权重有什么用呢？我觉得这个才是重点。简单来说，当有多条同一规则的css应用于同一元素时（比如，有3个选择器都分别定义了元素的 =color= 属性，到底采用谁的？），需要这个权重去判断到底采用哪一条规则。所以，这里会完整的讨论一下浏览器如何处理这个问题的。
+   另外，当然也要讲一下如何计算css选择器的权重。从类比学习的角度出发，它的机制跟linux/unix里的文件权限有点类似。
+
+*** Cascading order
+    Cascading，指的是层叠样式规则，也就是css规则。官方称这个问题为“Cascading order”，大意应该是指css规则的采用顺序，见[[https://www.w3.org/TR/CSS22/cascade.html#cascade][W3C CSS2.2 -- Cascading]]的文档，说得很详细。下面，我就用自己的语言阐述一遍。
+    W3C规定这个问题，有4个因素会影响到：
+
+    1. css规则的 =来源= 。是浏览器默认定义？还是开发者定义的？还是用户定义的？官方分别称为，“user agent”，“author”，“user”(ps. 某些浏览器可能会支持用户定义自己的css。)
+    2. css规则的 =重要性= 。css只有两中重要性等级，一种默认情况下的，称为“normal”；另一种是加了万恶的 =important!= 的，称为“important”;
+    3. css规则对应选择器的 =特殊性= 。一会，我们会讲如何计算。
+    4. css规则的定义 =顺序=。
+
+    所以，四个因素是：来源，重要性，特殊性以及先后顺序。但是“来源”与“重要性”在这里却有一个“小插曲”，当我们只考虑二者的时候，按照W3C的说法，应该很容易得出这样的顺序表（越靠前越先采用）：
+
+    | 来源       | 重要性    |
+    |------------+-----------|
+    | user       | important |
+    | author     | important |
+    | user       | normal    |
+    | author     | normal    |
+    | user agent | normal    |
+    |------------+-----------|
+
+    很显然，浏览器的默认css定义是不会有important不important的，所以上表只会有5项。这就是按“惯性”推测出来的顺序表，最优先的当然是用户自己标记为important的css规则，最后才是浏览器的默认行为。然而，实际情况却不是这样的。实际情况是：
+
+    | 来源       | 重要性    |
+    |------------+-----------|
+    | user       | important |
+    | author     | important |
+    | author     | normal    |
+    | user       | normal    |
+    | user agent | normal    |
+    |------------+-----------|
+
+    可以看到，“author normal”意外的比“user normal”优先。这想想其实是有一定道理的，一个网站应该长什么样子，首先应该是开发者（author）说的算，而不是先由用户说的算。但是，如果用户一定要改变默认的样式，比如增大字体、改变背景等，如果一定要的话，那么还有 "user important" 可以覆盖开发者的默认样式。官方的说法是，这样“达到了一种平衡”，用户应该默认采用开发者的样式，但是用户依然可以“强硬”的更改。我不知道说这些有没有意义，是不是扯太远了，但是对于这种“反常”的东西，我一直认为应该找到其真正的原由，这样才不会觉得规则很“生硬”，很“不知为何？”。那么，现在让我们回过头来，继续讨论“Cascading order”的问题。
+
+    Cascading order的算法是这样的：
+    1. 浏览器将所有样式定义，按“来源与重要性”分组。
+    2. 根据各组的优先级（上面说到的哪个），取存在的第一优先级的样式规则。如果，用户真的定义了“user important”的样式，那就采用，否则就取下一个，以此类推。
+    3. 如果对应分组内的样式有多条，就按 =选择器的特殊性= 排序，采用最特殊的那一条css定义。
+    4. 如果那个分组里最特殊的css不只一条，那就取“最晚”定义的那一条css。到这里，就不可能存在多条“最晚定义”的css了！
+
+    为什么会存在选择器特殊性一致的css规则？这很正常，看下css的选择器特殊值如何计算就知道了。
+
+
+*** Calculating a selector's specificity
+
+    其计算公式为：
+    1. 计算id选择器的个数，记为a
+    2. 计算类选择器、属性选择器、伪类的个数，记为b
+    3. 计算标签选择器、伪元素的个数，即为c
+    4. 忽略所有全局选择器、组合选择器、取反选择器
+
+    +那么一个选择器的特殊值，S(a, b, c)则为：S(a, b, c) = a * 100 + b * 10 + c+ （这是公式是错误的，见下方的说明）
+
+    +S(a, b, c)越高，则特殊性越大。+
+
+    今天发现，selector's specificity的计算公式在css2.2与css selector3 这两份官方文档里，有不同的说明。css selector3的描述，跟上面一致。而css2.2的描述却有两点出入：
+    1. +S(a, b, c)+ => S(a, b, c, d)，其中a指的是css是不是内联的，如果是则为1，而b、c、d分别指原来的a、b、c
+    2. 没有说明S(a, b, c, d)的计算公式是S(a, b, c, d) = a * 1000 + b * 100 + c * 10 + d。它的原文是：“Concatenating the four numbers a-b-c-d (in a number system with a large base) gives the specificity.”。特别注意
+
+    再仔细看看，发现其实css selector 3根本就没有说S(a, b, c) = a * 100 + b * 10 + c，它的原文也有那句 “Concatenating the four numbers a-b-c-d (in a number system with a large base) gives the specificity.”。这时，我才猛然发现，我之前的理解是错误的！！！只是侥幸再大部分case下是刚好适用的。
+
+    简单来说，有两点需要说明：
+    1. css 2.2 对css selector 3的补充，特殊性的计算多了一个纬度，是不是inline css，如果是a=1。
+    2. =S(a, b, c, d) = a * 无限大的数 * 1000 + b * 无限大的数 * 100 + c * 无限大的数 * 10 + d * 无限大的数=，所以S(1, 0, 0, 0) 总是大于 S(0, n, 0, 0)。当同一个纬度的n相等的时候，才去比较下一个纬度。
+
+    这说明，inline css的特殊性永远比嵌入式跟外部引入的css来得大！
+
+    这里既然提到了嵌入式、外部引入，那就顺便一起讨论了。这两个地方定义的css，在计算特殊性的时候，“待遇”一致 —— a都是等于0。
+    
+
+*** 嵌入、外部引入css的定义顺序问题
+    无论是嵌入、还是外部引入，都是一视同仁，谁在后面，谁的定义顺序就是比较后面。从来没有嵌入的css大于外部引入的css的说法！之所以这么认为，是为什么我们基本都是引入一堆外部css之后，再在其后面写嵌入css。
+
+* CSS Values
+** CSS Length Unit
+   CSS的长度单位。这个问题原本只有只有两个重点：1）有哪些长度单位？2）长度单位的继承问题。但是，看到这个单元的时候，我脑袋里闪过了“Retina显示屏模糊”的问题，我很想把这个问题给侬清楚，它貌似跟CSS的“px”很有关系。
+
+*** 长度单位的分类与继承
+    CSS的长度单位有两个分类：
+    1. 绝对长度：px等;
+    2. 相对长度：em、rem、vh/vm、百分比等；
+
+    以上提到的，都是比较常用的长度单位。我们一一讨论一下。
+
+    “像素”，px。这里的px是css概念里的“像素”，不是真实的物理像素。那么css的px有固定的大小吗？W3C给出的答案是，有。约等于0.026厘米。一般浏览器的默认字体是16px，也就是约为0.42厘米，感受一下。但是我怎么觉得实际情况可能未必如此。不过这个目前不用关心。另一个问题是，1px是最小的长度了吗？W3C没给出规范，各个浏览器的规范各异。Safari支持0.5px这样的长度单位，详见这个[[https://codepen.io/benknight/pen/Dwuqk][Example]]。那么还能更小吗？比如0.1px。我想就目前而言，再小应该是不可能的了。按照Retina显示屏，1px的长度相当于2个物理像素点的长度，所以对于Retina显示屏而言，最小单位理论上只能到“0.5px”，即一个“物理像素”。
+
+    再来说明“em”这个单位。它的含义是，1em表示当前元素的字体大小，如果当前元素的字体大小变了，它也就跟着变。所以，它是一个相对长度。所有的“相对长度单位”的区别就在于，参照物不同。这里，把它们一并讲了。见下表：
+    | 单位名词 | 参照物                     |
+    |----------+----------------------------|
+    | em       | 当前元素                   |
+    | rem      | root元素，即html元素       |
+    | vh       | viewport的高度             |
+    | vm       | viewport的宽度             |
+    | %        | 看情况，一般情况下是父元素 |
+    |----------+----------------------------|
+
+*** Computed Value与继承
+    上文提到的相对长度有一个小坑，见这个例子：
+
+    #+BEGIN_SRC web
+      <style>
+       body {
+           font-size: 12px;
+           text-indent: 3em;  /* 36px */
+       }
+       h1 {
+           font-size: 15px
+       }
+      </style>
+      <body>
+          <h1>Some thing there...</h1>
+      </body>
+    #+END_SRC
+
+    h1的text-indent到底是多少px呢？是 12px * 3 = 36px，还是15px * 3 = 45px？我们来分析一下。
+    h1自己并没有定义text-indent，所以它的text-indent是继承来的(text-indent可被继承)，也就是它继承自父元素body的text-indent。那么是继承“3em”还是继承“3 * 12px = 36px”？
+    根据W3C标准可以得到答案，36px。因为W3C的继承，都是继承“Computed Value”，而不是继承“Rule”。所谓Computed Value就是计算之后的结果值。“3em”并不能之间用来渲染，必须转换为确切的值，所以3em的“Computed Value”就是36px，所以h1继承到的text-indent就是36px。
+    这就小小的坑了我们一下。比如，上文的text-indent这个属性。我们一般希望每个段落的缩减是“2个字”，所以会定义为“text-indent: 2em;”。但是，如果你只在body定义上定义，而不在实际作用的元素上定义，那么如果两边的字体大小不一致，就会达不到对应的效果。
+    
+   
+*** Retina显示屏模糊问题
+    因为自己从未遇到过这个问题，所以我一开始完全摸不着头脑。到底是什么模糊了？字体？border？还是什么？看了一堆文章，一上来就讲“像素密度”什么的，也没说明到底遇到什么问题。直到我看了MDN的这篇文档——[[rmail:https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio][Window.devicePixelRatio]]，才明白问题是什么。噢～ 原来是“位图模糊”问题，而不是什么“border模糊”之类的。是“位图”，“位图”！
+    在Retina显示屏出现之前，大部分显示器的1个物理像素与css的1px是相对应的，但是由于Retina显示屏提高了“像素密度”，css的1px对应的却是4个物理像素点。一张位图，最好的效果是，一个“位图像素点”对应一个“物理像素点”来渲染。如果一张图片是200 * 300个像素点，传统情况下，css的设定当然也是200px * 300px了。但是到了Retina屏下，如果依然这样设定，那么其结果是，1个“位图像素点”由4个“物理像素点”来渲染，这样就好像把图片放大了，“颗粒感”也随之出现，也就模糊了。
+    解决方案当然是在Retina屏下使用“二倍图”啦。但是这里面涉及到一个图片多版本问题、网络加载问题、开发效率问题、兼容性问题、工程化问题，不是那么简单的。不过这里就不展开讨论了。详见这篇博客——[[https://www.w3cplus.com/css/towards-retina-web.html][走向视网膜（Retina）的Web时代]]，写得不错。
+
+** Specified, computed, used and actual values
+   有时候，实在不明白一个css属性为什么要有这么多种“value”。这或许反应了需求的多样性，以及css的复杂性。
+
+   简单来讲，浏览器一开始只需要3种value，我们按它的渲染过程，来逐一讲解。
+
+   1. 渲染的初始阶段，给每个元素的每个css属性一个“Specified Values”，即 =指定值=。算法如下：
+      1) 如果定义了css，则采用对应的css值作为Specified Values。
+      2) 如果没有定义css并且对应属性是默认继承的，或者定义的css的值就是"inherit"且当前元素存在父元素，则以父元素的Computed Value为本元素的Specified Value。当然，这时候本元素的Computed Value也就等于Specified Value。
+      3) 如果即没有定义css，对应属性也不是默认继承的，或者虽然是默认继承的，但是没有父元素（如html），则使用对应属性的“initial value”作为Specified Value。
+   2. 确定好Specified Value之后 =正式渲染= 之前，还需要通过Specified Value换算出Computed Value，即 =计算值=。有些值是不利于渲染的，如相对长度单位“em”等。提前将其换算成绝对长度单位“px”，免得渲染时再去做计算，这样可以提高渲染效率。这就是Computed Value的意义所在。另外，属性的继承是按Computed Value作继承的。我想，这同样也是为了提高效率吧！免得逐层作运算。
+   3. 最后，来到渲染时，这时候得到的value，就是Used Value，即 =应用值=。为什么要有Used Value？因为Computed Value毕竟是渲染前的值，有些东西是要到渲染的时候才能确认的。比如，有个元素的width: 50%，那么父元素的宽度不知道的时候（因为父元素的宽度可能也是依赖它的父亲元素的，如此逐层往依赖），就计算不出它的宽度。这时候，就非得进行渲染不可！我们需要知道viewport的宽度，然后知道"root"元素的宽度，然后逐层往下渲染。类似的case还有很多，详见[[https://developer.mozilla.org/zh-CN/docs/Web/CSS/used_value][MDN-CSS应用值]]。
+
+   这原本是一个很“美满”的结局。但是，现实世界还真的是复杂的。比如这样一条css： =border: 0.5px solid;=，请问它的 =border-width= 的3 value分别是多少？很显然，3个value都是 =0.5px=。但是实际渲染情况呢？却未必能如愿渲染。Safari在Retina显示屏下能绘制出0.5px宽度的border，而Chrome则会绘制出1px宽度的border。这是“表里不一”啊！css2.1给出了一个新的“value”定义，叫 =actual value=，也就是 =实际值=。 我觉得，这个目前就了解下就好了。因为目前也没有获取Actual Value的js接口，所以即便有这个值存在又如何？Actual Value估计目前只存在于渲染引擎的源码里吧！反倒是Computed Value可以通过 ~window.getComputedStyle~ 这个接口获取，这或许对我们的开发有所帮助。
+
+** CSS Inheritance
+   CSS的继承，这里重新梳理一遍要点：
+   1. 继承自父元素的Computed Value；
+   2. 有些CSS的属性是默认继承自父元素的，另外可以使用'inherit'这个值来强制继承；
+   3. 如果元素是根元素，那么“继承”对它来说，会变成使用"initial value"；
+
+   继承采用的是“Computed Value”，会造成一些坑，这里就不再啰嗦了。前面讲过"text-indent: 3em"的例子了。
+
+   其实，这里我最新讨论的是，到底该不该记哪些属性是默认继承的？哪些不是？我在重新学习之前，好像感觉记一下很重要。但是现在想想，却觉得去记哪个会继承哪个不会是很愚蠢的。先不记吧！哪天可能会发现其中的规律。
+
+* Visual Formatting Model
+  BFC（Block Formatting Context）与IFC（Inline Formatting Context）是CSS两个非常重要的概念。它们的内容主要集中在CSS2.2文档的9、10两章。
+
+** Readding Log
+   对于“成果”，我更喜欢了解其达成的 =过程= 、其 =发展的历史= 、存在的 =原因=  ，而不是其本身。阅读 =Visual Formatting Model= 的时候，我希望多记录一些阅读过程中的思考，我称之为日志。
+
+   从Charpter 9开始，就很容易被各种各样的名词、概念搞得糊里糊涂。随便举几个名词吧！
+   - Element
+   - Box
+   - Block
+   - Container
+   - Line
+   - Inline
+   - Block Box
+   - Inline Box
+   - Block-level Block
+   - Inline-level Block
+   - Containing Block
+   - Block Container Box
+   - Inline Boxes
+   - Line Boxes
+   - ... ...
+
+   晕了没有？我自己是晕得不行。读的过程中，貌似有所收获有所理解，但是又理解得不够清晰、深入、完整。脑袋里有了轮廓，但却不清晰。
+
+   这个时候，很自然的就会有一些疑问与思考。我大概更深入的了解到 =Line Boxes= 与 =inline Boxes= 以及 =Inline Formatting Context= 之间的关系，还有大概了解到 =BFC= 与 =IFC= 的关系。我认为，这其中一定有一条很简单的 =概念、规则、或思路= 将这一切串在一起。所以，我的学习思路从 “=阅读= Visual Formatting Model，跟着文档学习”，变成“尝试思考Web的排版系统是怎样的”。这该如何理解？意思就是通过理解“排版系统”，来将那些概念都串起来。
+   从上面我列举的名词中，你也看到了，有那么多相似的概念，为什么Web的设计者们要搞得这么复杂？有更简单的方案吗？如果是我，我将怎样设计Web的排版系统？
+   思考到这里，我突然意识到，如果去思考一个Web排版系统如何设计、实现，将会对CSS的 =Visual Formatting Model= 有一个很好的理解。我相信会是这样的！
+
+   相比之前看完一章，就能有所收获、理解不同，这一次的学习周期将会更长一些。看第一遍，主要是阅读 + 思考 + 记录疑问 + 记录思考结果，同时要略过琐碎。然后，就是去把 “排版系统” 的实现理清楚。最后，则是重读一遍文档，这一遍带着一个清晰的“排版系统”模型，应该会有更深刻的理解，同时需要拾遗之前忽略的琐碎。
+
+*** 18.10.26
+    为什么 Visual Formatting Model有这么多概念？这么复杂？ 可能是因为真的需要
+    如果去设计一个“排版系统”需要注意什么方面？Web在最开始的时候，是什么样子的？
+    什么是“排版系统”系统？一张白纸+一堆笔，画上文字跟图片？那么粒度是什么？是像素吗？肯定不是，如果是像素，那Web开发者就真的是拿着画纸画笔工作的。
+    “粒度”是什么意思的呢？“画画”的粒度？
+    把“粒度”在调大一点，如果是“格子”呢？类似网格画布那样。 这样想来，貌似有点接近了。但是，我们不可能一个格子一个格子的去调整格子的“样式属性”，用的时候不可能，开发实现的时候也不可能。比如，“如果”，二字。如果你想让两个字的字体变大，会如何作？我们是一个字一个字的调大小吗？不是！我们是用个"SPAN"或者什么元素，把这两个字“包裹”起来，然后调整字体的大小的。
+    怎么样？有没有什么感觉？
+    我突然明白，“粒度”指的是“格式化的粒度”，即用户（Web开发者）是如何“使用”的粒度，以及浏览器实现者是如何“实现”的粒度。
+    那么，这个“粒度”就不可能是以固定的“格子”为粒度的，我们放开一点，这些“格子”是不是可能是“大小不一”的？貌似是这样的，它的粒度是“大小不一”的格子。格子从左到右（默认）一个一个的排列。
+    但是 如果宽度不够呢？换行。“行”跟上面说的“格子”是什么关系？有几种情况：
+    1. 一个“格子”可能占很多“行”
+    2. 好几个“格子”占一“行”，所以一行会有很多“格子”
+    
+    “行”，对应的就是Line，按CSS 2.2文档的说法是 =Line Box=
+    “格子”，对应的就是InLine Box，按CSS2.2文档的说法也是 =InLine Box=
+
+    按照上面说到的第一点，其实我们的“格子”—— =Inline Box= ，未必 "In Line"。它其实可以是 "Span Lines"。但是为什么依然叫 =InLine Box= ？ 因为它真的是 “In Line”，只不是区别在于“In One Line”，还是“In Many Lines”。也就是说，“格子”总是被“行”包着。
+
+    为什么要先思考只有“文字”的情况？
+    其实，我在“假设”的时候、在思考排版系统该如何设计、实现的时候，我觉得先想一个简单的：只能排版文字。不支持图片、不支持其它任务多媒体、不支持浮动（没图片，也就没浮动什么事）、不支持定位、布局。
+
+
+*** 18.10.27
+    经过两天的潜意识思考，我感觉“排版系统”在我脑袋里更清晰一些了。
+
+    等有个更深入的了解之后，是不是可以去阅读一下WebKit关于渲染树、渲染的源码？
+
+    今天进一步的把Normal Flow相关的知识读完，然后是浮动与绝对定位相关的知识，我只是走马观花的看一看。进入我脑中的思考是，CSS如何处理不同“Model”之间的关系的？InLine Box与InLine Box之间什么关系？会有什么作用？InLine Box与Line Box之间呢？Block Box与Line Box之间呢？
+
+    那些属性是Block Box才有的？而哪些是Inline Box才有的？它们之间有什么区别？
+
+    是继续读完Chapter 10 - Visual formatting model detail，还是先理清一遍前面的关系。
+
+    看了一遍网上所说的inline、block、inline-blcok之间的区别，我感觉inline-block或许要跟replaced inline element放在一起讨论，它们可能是一样的。
+
+    现在觉得inline的关键要素在于：1) 元素之间的排列；2）对行高的影响；3）vertical-align。至于inline能不能设置height、width、padding、margin等，则有点混乱。
+
+
+*** Inline Element
+    分析不同display的元素从两个方面入手：
+    1. 对内。即元素的大小问题
+    2. 对外。与其它不同类型display的元素的相互作用。
+
+    所以，display: inline; 的元素 ，即inline元素由如下特性：
+    1. 对内。元素的宽度 = 内容的本来宽度（某些元素可以设定width，但大部分设定width无效） + margin宽度 + padding宽度 + border水平宽度。而元素的高度则根据不同的元素由不同表现，在内容高度方面，或以内容的本来高度为准、或允许设定height属性；在padding与margin方面，或允许设定垂直属性、或不允许。
+    2. 对外。分为几个方面：
+       1) 排列。Inline元素在同一行从左往右，一个接一个的排列，直到排不下换行。一个行内元素也可能独自占用多行。
+       2) 行高。Inline元素的行高，基本取决于自身的line-height属性，但是对于设置height有效的元素（一般是replaced element），则其line-height属性无效，它的真实“line-height”就是“元素本身的高度”！
+
+** BFC与IFC
+   虽然现在也没有完全读懂css2.2的9、10两章，但是我突然觉得之前太拘泥于要先看懂文档上的概念了。今天突然觉得理解什么是BFC与IFC，以及为什么。
+
+   简单来说，它们都是一种格式化上下文。那么什么时候需要有不同的上下文呢？
+
+   一个元素浮动了，它内部的布局脱离了它的父文档流，这就需要一个新的格式化上下文；一个iframe标签，内部是一个全新的html元素，它当然也需要一个全新的上下文；一个overflow不为visible的元素，本质上就是在内容拥有一个新的“小天地”，它也会有一个新的格式化上下文。这些都是Block级别的格式化上下文
+   那么什么时候需要Inline级别的格式化上下文呢？一段文本，某些内容颜色是红色，某些是黑色，剩下的全是蓝色，如何做到？也是需要至少三个IFC才能做到。
+
+** the containing block
+   =the containing block=是个重要的概念，大部分box的定位跟大小计算都跟它的containing block有关。下面，搬运css2.2 10.1章的定义：元素的定位、大小的计算有时候跟一个矩形有关，这个矩形叫做这个元素的containing block。css2.2再第九章特别强调，“某个元素的containing block”不是指它产生的containing block，而是指包含它的那个containing block。下面说说如何确定一个element的containing block：
+
+   1. 对于root element而言，它的containing block几乎等于viewport，这个containing block叫做初始containing block；
+   2. 对于position为static，relative的element而言，它的containing block由最近的一个祖先block container的box（或者产生BFC的box）的 **content edge**形成
+   3. 对于position为fixed的element而言，它的containing block由viewport产生（与第一点类似）。
+   4. 对于position为absolute的element而言，它的containing block由最近的一个position为absolute、relative、fixed的祖先element的**padding edge**形成。实际情况比这复杂，我这边没有引入inline elment之类的情况，我自己也没搞懂，感觉这种case遇到的机率太小，就先跳过。
+   
+** margin
+   关于margin，这里就只讨论=block-level element in normal flow=的情况，在其它情况下规则非常的多、琐碎，遇到了当场调试、查文档就好了。css2.2用了整整10个小章节来说明这些情况，详见css 2.2 10.3。
+
+*** percent的margin值
+    percent的margin值，都是以元素的containing block的**width**来计算的！这点需要特别注意，不要以为margin-top跟margin-bottom是以containing block的height来计算的。
+
+    所以，这里需要特别注意，containing block的**width**是什么？它可能是content edge，也可能是padding edge，但绝不是order edge。详见containg block的定义。
+    
+*** 水平margin -- 重要公式：border-sizing width + horizontal margin = containning block width
+    这个公式的意思是：margin-right + margin-left + (content width + left-border-width + right-border-width + left-padding-width  + right-padding-width)要等于containing block的宽度。这个公式非常重要！为了简便性，我将括号里面的公式缩写成border-sizing width。
+
+    说得绝对一点，这个公式永远成立。但是，现实是很残酷的，假设containing block width固定为500px，这个时候把元素的width设置成1000px，这个公式不就崩了吗？的确是会崩，但是css却坚决要让这个公式成立，所以就会有很多奇奇怪怪的行为。在介绍这些奇怪的行为之前，先说一下css是如何让公式保持成立的。
+
+    css会从上述公式中找出一个变量，用来补差值。为了满足公式，把差值全部都放在这个属性上。下面，依然假设containing block width为500px。
+
+    1. 当width为auto时，差值全部部给width。比如：margin-left: 1000px; margin-right: 10000px，这时候width = 500px - 1000px - 1000px，渲染出来的结果就是width为0。如果margin都是负数，你就会发现width被拉宽了。
+    2. 当某一个margin为auto，且width不为auto的时候，行为跟第一点类似。
+    3. 当两个margin都为auto，且width不为auto的时候，有两种情况：
+       1. border-size width大于等于500px，那么以margin-right为auto，而margin-left视为0
+       2. border-size width小于500px，那么margin-left跟margin-right均分剩余的差值。这也是margin: 0 auto；能让元素水平居中的原因。
+    4. 当没有一个属性为auto的时候，强制以margin-right为auto，不管margin-right一开始被设定了什么值
+
+    记住这几点，你就能玩转horizontal margin的auto、跟负值的情况。非常的酸爽。。。
+
+*** 垂直margin
+    水平margin的计算情况，实在是有那么点变态！相对而言，垂直margin相对简单多。
+
+    首先，垂直的margin为auto时，它总是为0。
+    另外，它满足公式：=border-sizing-height + vertical-margin= = =actual block heigth=，垂直的margin加上element的border-sizing height，等于对外的实际高度。借用水平margin计算方式的说法，对外的block height被拿来补差值。所以，你会发现，如果height=20px，而vertical-margin=-19px，那么对外来说，这个block element只有1px的高度。特别注意：是对外界来说，它的高度只有1px，而实际渲染出来还是20px。这有点类似overflow visible的效果。
+
+    虽然，垂直的margin在计算上相对简单，变化的花样也比较小，但是垂直margin有个魔性的点——margin 坍塌！我感觉，这个得另起一章讲述。
+
+*** 垂直margin的坍塌
+    这里就不说什么是margin的坍塌了。
+
+    垂直的margin为什么要坍塌？我也不知道，之前貌似看到css2.2里讲过，说这样符合开发者的预期。现在已经习惯它会坍塌了，所以也难“追究”这种说法合不合理。总之，只要满足以下情况，垂直margin的就会坍塌：
+    1. 必须处于同一个BFC
+    2. 要坍塌的相邻margin之间没有“内容”阻碍。这里所说的“内容”包含如下case：
+       1. border
+       2. padding
+       3. 清除浮动（这一点我不太知道如何重现，对浮动以及清除浮动的知识已经很模糊了，呵呵）
+       4. 没有任何高度、内容、border、padding的元素，不属于“内容”。
+
+    所以，按着上面的两大点，举一些例子：
+    1. 浮动的元素跟它的父元素的margin不会坍塌，因为float会产生一个新的BFC
+    2. overflow 不为visible的元素的margin不会参与坍塌，因为overflow不为visible的元素会产生一个新的BFC
+    3. 三个连续的div，第一跟最后一个都有margin，而中间一个div什么也没有，高度为0。那么第一跟最后一个div之间的margin会坍塌。因为什么都没有的元素不属于障碍物。
+
+    其实，如何阻止margin坍塌，除了创建障碍物外，还应该多看看如何才能产生一个BFC。css3下，产生BFC的方式非常多，table布局、flex布局、grid布局
+float、overflow不为visible、绝对对应元素等等，详见[[https://developer.mozilla.org/zh-CN/docs/Web/Guide/CSS/Block_formatting_context][BFC]]。
+
+    这里要说一个小插曲——margin坍塌的计算。当两个值都是正数的时候，取大的那个。当存在负数的时候，两个数相加。还是那句话：为什么要这样设计啊！
+
+** inline formatting
+   - em box :: 字符框，渲染一个字符的格子，em box的高度等同于font-size。但是一个字符渲染的结果可能会超过em box的边界，这个受字体以及实际渲染控制。
+   - anonymous text :: 匿名文本，指的是没有被inline element直接包裹的text
+   - content area :: 内容区，对于non-replaced inline element而言，content area可以是em box的集合，也可以是字符渲染结果的集合，由浏览器决定。这点听起来很难理解。对于replaced inline element而言，其content area由content + margin + border + padding。
+   - leading :: 行距，leading = line-height - font-size，然后leading会被分别均分到content area的顶部跟底部。可以看出，这个leading可能为负数！只有nonreplaced element有leading。
+   - inline box :: 行内框，leading作用到cotnent area的结果就是inline box。但是inline box的height并非就是content area + leading，对于nonreplaced inline element而言，height等于line-height，对于replaced inline element而言，其height就等于content area
+
+   - line box :: 行框，line box就是用来将同一行的inline box包裹起来的box，很自然的，它的顶部就等于最高的那个inline box的顶部位置，而底部就等于最低的那个inline box的底部位置。
+
+   - vertical上的border、padding、margin不会影响nonreplaced element的cotnent area，见下面的代码，去掉border、padding、margin并不会影响布局。这一点呼应上文关于content area的定义
+     #+BEGIN_SRC html
+       <p style="font-size: 12px; line-height: 12px;">
+         This is text, <em>some of which is emphasized</em>, plus other text<br> which is <strong style="font-size: 24px;/*! border: 20px solid; */border-top: 20px solid;border-bottom: 20px solid;padding-top: 10px;padding-bottom: 10px;margin-top: 10px;margin-bottom: 10px;">strongly emphasized</strong> and which is<br>
+         larger than the surrounding text.
+       </p>
+     #+END_SRC
+
+*** vertical align
+    inline formating里的vertical align一直是让我非常之头痛的概念，今天在这里将其斩杀咯～。
+
+    理解vertical align的重点在于两点：
+    1. 理解inline box，以及如何计算inline box的line-height
+    2. 理解line box，以及line box是由line-height最大的那个inline box决定的。
+
+* Font styling and text styling
+** @font-face 之 font-display
+  主要感悟来源以下两篇文章:
+  - [[https://css-tricks.com/almanac/properties/f/font-display/][font-display | CSS-Tricks]]
+  - [[https://developers.google.com/web/updates/2016/02/font-display][Controlling Font Performance with font-display | Google Developers]]
+
+  关于概念，Google开发者那篇讲得很细致了；关于使用，我觉得CSS-Tricks那篇说得比较透彻。
+
+  起源。=font-display=是@font-face的一个属性，为什么需要这个属性？因为@font-face定义的字体往往需要加载，在加载完全之前，文本如何渲染？=font-display=就是用来控制_这段时间_的文本“渲染策略”的。
+
+  有哪些策略？其实无非就两种，“先留白”和“先渲染”。“先留白”就是说，字体文件加载完成前，依赖这个字体的文本先留白，等文件加载完之后再重新渲染。“先渲染”指的是，先使用浏览器端已经有的字体渲染文本，等文件加载完之后再重新渲染。实际上，=font-display= 的取值有很多种，这是因为有一些“混合策略”，我们最后再讨论。先来讨论这两种策略的优点跟缺点。
+
+  “先留白”策略的优缺点。我认为“先留白”是一种“尊重”网站开发者意愿的策略，它保证网站完全按开发者希望呈现给用户的样式来展现。如果网速很快，字体从留白到渲染的间隙非常之短，那么那点留白是时间是不太容易察觉的。这是它的优点。那么如果网速很慢，加载字体需要十几秒，那么这时候就会出现十几秒的文本空白，这种用户体验应该算是很差劲的。这是它的缺点。
+
+  “先渲染”策略的优缺点。与“先留白”相对于的，“先渲染”策略的优点就在于，网速很慢时，它能保证用户先看到文本内容。它的缺点则在于，“不够尊重开发者”。其实这并不是什么大不了的缺点，我相信有严格保证呈现给用户字体样式要求的网站还是少的，真正的缺点在于：如果网速很快，渲染引擎也给力（一般都给力），那么文本几乎立即被渲染出来（这时候是用“备用字体”），紧接着字体文件也加载完毕（因为网速很快），那么文本又会立即被渲染一次（这次是使用@font-face定义的字体）。这种情况，就会造成文本区“闪烁”一下，网络称之为FOUT--"Flash of Unstyled Text"。这才是它的真正缺点。
+
+  我们该使用什么策略？其实决定权往往不再开发者，或者用户手里，决定权在“网络质量”手里。如果网络条件很好，用“先留白”；如果网络条件很差，用“先渲染”。为此，=font-display=才有了=fallback=跟=optional=这两个值，它们代表“先留白”跟“先渲染”两种策略的“混合策略”。也就是，先采用很短的“先留白”策略，一般是100ms，如果网速很好100ms也够下载字体了；如果100ms还没下载完字体，那么立即采用使用备用字体渲染文本，直到字体加载完毕。
+
+  没有完美的策略。其实，不管哪一种方案都很难避免“闪烁”的发生。因为网络不是简单的只有“很好”跟“很坏”之间，100ms的时候还没加载完毕，但是110ms的时候就加载完毕了，这时候就要在10ms内经历“空白”->“备用字体渲染”->“期望字体渲染”的多重闪烁，哈哈哈～
+** @font-face的font-weight、font-style
+   一套字体一般会有好几个“形态”：不同的font-weight与font-style。在定义@font-face的时候，只需要把font file对应的font-weight、font-style等定义好，浏览器就能根据element的font-weigth、font-style跟找到对应的font fil。而font-family只需要统一写字体名就好，不同带上regular、light、italic之类的后缀。
+** font-weight
+   font-weight虽然有9个level，[100 - 900]，但很少有字体9个level都支持。其中，值得注意的地方有两点：
+   1. keyword值的mapping：normal=400, bold=700
+   2. border/lighter 比继承的font-weight粗或者细，这里不会跟着9个level走，详见[[https://www.w3.org/TR/css-fonts-3/#font-weight-prop][css-fonts-3 3.2]]。
+** 字体对齐问题 -- how to compute inline element height
+  今天遇到一个字体对齐问题，使我对=height=有一个更深入的认识。
+  先前就已经知道，block element的height如果是auto的时候，其computed height的计算方式是：max(computed line-height of inner inline element)。现在公司使用的字体是ProximaNova，它渲染出来的inline element的height刚刚好就是赋予的font-size。这使我有2个错误的认识：
+  1. 我以为所有的inline element的height就应该等于font-size
+  2. 在处理一些字对齐的问题的时候，经常使用line-height=1，然后height与computed line-height刚好相等，这让我以为inline element height与line-heigth就是同一个东西
+
+  先描述一下今天做的题目，写一个天气预报的界面（[[file:attachments/compute-inline-element-height.webarchive][web archive]]），我在处理底部的“温度”与“风向”、“湿度”的对齐问题的时候陷入了困境。温度的font-size为45px，然后“风向”的顶部要与“温度”的顶部对齐，“风向”的底部要与“湿度”的底部对齐。我一开始以为用个grid布局（如我css所写），并且所有line-height都设置为1，然后“风向”与“湿度”各自的align-self分别为start跟end就能很完美的解决这个问题了。
+
+  结果让我大跌眼镜。非常的不对齐，我给温度里面的文本包个span，从dev tools看到它的高度竟然是61px（使用'Open Sans'字体时）。由于之前经验的误导，我一时陷入了迷茫，我以为是自己乱秀grid布局导致的问题。然后，我脱离grid布局，写了个span，发现高度还是61px。最后，Google了一下，才发现之前的认识是错误的。
+
+  首先，=height of inline element= 与=inline-height of inline elment=是完全不一样的概念！虽然，那个span的height是61px，但是它的computed inline-height依然是45px * 1，所以包裹它的div的高度也是45px。
+
+  其次，=height of inline element=并不一定会等于font-size，css2.2里有说，见[[https://www.w3.org/TR/CSS22/visudet.html#inline-non-replaced][文档]]。它根本不受css标准控制，不同的字体会渲染出不同的结果。我在那个web archive文件里上面写了好几个font-size为45px的span，每个span字体不同，它们的height也完全不一样，有的61px，有的51px，有的刚好等于45px。
+
+  最后，=height of inline element=非常大概率下是不等于实际渲染出来的字的高度。所以，如果两列字的font-size差很大，你还想让它们水平对齐，那只能比较hack的的方式去微调了，比如用margin或者绝对定位，[[file:attachments/hack-adjust-vertical-align.png][如图]]。
+** font-display与loading组件的相互借鉴。
+  在使用Loading效果的时候，遇到一些问题，今天重读font-display的时候发现两者有可以相互借鉴的地方。
+
+  先说Loading的问题。当组件正在加载数据的时候，我们希望组件显示一个loading效果，等数据加载完成后，再去掉loading效果。这会有这样的问题：当数据加载非常快的时候，从loading -> 取消loading的过程会非常的快，这时候会组件闪烁一下，很影响体验。
+
+  怎么解决？这时候需要在进入loading以及退出loading的时候加上过渡动画，这样就会顺滑一些。
+
+  但是如果数据加载非常快，这时候还要进入loading，不免让人心烦，总是要等那么久。我觉得这时候就可以采用font-display的混合策略，即：
+  1. 组件直接白屏，并且等待100ms
+  2. 如果100ms内数据还没有加载到，则进入loading效果
+  3. 等到数据加载到之后，使用过渡动画退出loading
+
+  这样就能比较完美的解决上诉体验问题。当然，如果能像font-display那样考虑网络情况，那就更牛皮了～
+
+  反过来，loading的过渡动画也可以借鉴给font-display。font-display虽然有机制可以大概率避开字体变化时产生的闪的问题，但是却无法避免。如果新字体加载到之后，那么也使用过渡动画切换字体，这样是不是也就顺滑了很多？但是，想想也知道字体貌似不支持动画，并且这样很有可能会有性能问题。
+
+  
+** 从 =text-overflow: ellipsis= 到 =white-space=
+  从=text-overflow: ellipsis=开始讨论。
+
+  “超出的文本变成省略号”，是很常见的UI需求。怎么做呢？
+  1. 首先，你要让文本“超出(overflow)”
+  2. 其次，设置=text-overflow: ellipsis=, =overflow: hidden=
+  
+  第一点不是那么容易做到。你需要有如下两个条件：
+  1. 首先，你的容器要有一个 =“宽度”= ，否则就很难“超出”；
+  2. 其次，你要打破浏览器的一个默认行为—— =文本自动换行=,  需要设置属性 =white-space: nowrap=
+
+  所以合起来就是三步走：
+  1. 首先，检查容器是不是有一个宽度，或者最大宽度
+  2. 其次，让文本不换行 —— =white-space: nowrap=
+  3. 最后，设置=text-overflow: ellipsis=, =overflow: hidden=
+
+
+  对=white-space=的疑问
+
+  这里，让我好奇的属性是 =white-space: nowrap=。为什么控制文本是否换行的属性名字叫做=white-space=？这看起来很不合理，叫=line-wrap=不是更好？查了一下属性说明，发现了一点其中的渊源。
+
+  这个渊源就是HTML对空格的处理问题。HTML是这样对待文本中的空格的：
+  1. 忽略文本的前置、后置空白字符；
+  2. 文本中间连续的空白字符只会当作一个“空格”；
+  请特别注意“空白字符” 与 “空格”。
+
+  现实的需求是多样的，浏览器这样粗暴的对待文本中的空白字符有点过于粗暴和不近人情。于是有了 =<pre>= 这个标签，它会渲染所有空白字符，“原样”输出文本。
+
+  现实是无奈的，你以为有了=<pre>=真的就能“原样”输出了吗？不是的，“换行问题”也来瞎搅和。诚然，在=<pre>=我们可以通过换行符来控制换行，但是如果一行的文本太长超出容器宽度了，换还是不换呢？你要“原样输出文本”，那就不换，但是这样文本又溢出到容器之外；如果换行了，又不是“原样输出”了。这种case，默认情况下，其它标签是换行的，=<pre>=标签是不换行的。
+
+  梳理一下，这里面有两个方面的问题：
+  1. 如何处理空白字符？有如下选项
+     1) 走浏览器默认行为：忽略文本前后空白字符，文本中间连续空白字符当作一个空格。
+     2) 不做特殊处理
+     3) 遇到换行符则换行，其它字符依然走浏览器默认行为 
+  2. 一行文本太长，要不要换行？
+     1) 不换行
+     2) 换行
+
+  我觉得，=white-space= 其实只应该考虑第一个方面的问题，而第二方面的问题应该另起一个新属性，例如=line-wrap=来处理。但是，它把这两方面的问题都考虑了，这是我觉得它畸形、奇怪的地方。我们把这两个维度做一个排列组合：
+  | 如何处理空白字符？                             | 一行文本太长，要不要换行？ | 对应=white-space=属性值 |
+  |------------------------------------------------+----------------------------+-------------------------|
+  | 浏览器默认行为                                 | 换行                       | normal                  |
+  | 浏览器默认行为                                 | 不换行                     | nowrap                  |
+  | 不做特殊处理                                   | 不换行                     | pre                     |
+  | 不做特殊处理                                   | 换行                       | pre-wrap                |
+  | 遇到换行符则换行，其它字符依然走浏览器默认行为 | 换行                       | pre-line                |
+  | 遇到换行符则换行，其它字符依然走浏览器默认行为 | 不换行                     | 不存在                  |
+  |------------------------------------------------+----------------------------+-------------------------|
+** 让"to-do"不在"-"处断词。
+  默认情况下，断词规则是=word-break=的，但是遇到'-'的时候浏览器会允许断词。英语中'-'其实有两个作用：
+  1. 断词。即行末写不下某个单词了，要把单词拆开到两行写，则要以'-'结尾，表示这里断词了。
+  2. 连词。某些单词是由两个单词连在组成的，如=to-do=。
+
+  很显然，当一个词是连词的时候，'-' 又不小心被当作断词符了，那么可能会引起歧义。当你认为它是断词符号的时候，"to-(第一行行尾巴)do(第二行行首)" 就变成了"todo"，而实际上你希望它被视为“to-do”（ps. 虽然这里"todo"与“to-do”并无二意）。这个时候浏览器希望你告诉它，'-'是连词符号，请不要以它为断词符，以免引起歧义。你只需要把'-'改成=&#8209;=即可。
+
+  这个特殊符号叫[[https://en.wikipedia.org/wiki/Wikipedia:Nonbreaking_hyphen][Nonbreaking hyphen]]。
+** non-breaking space与一个设计原则
+  今天我才知道一直算是“误解”了一个特殊符号=&nbsp;=。以前我一直以为它是“空格”的转义字符，实际上这个定义不准确，准确的定义是--"Non-breaking space"。因为一般的空格可以被断行的，只要换成这个"Non-breaking space"，浏览器就不会在此处断行。虽然说它也可以用来产生“多个空格”，但是更高级的用法是防止最后一行只有一个单词。
+  “最后一行不要只有一个单词”，这是designer告诉我的，我觉得很合理。如果只有一个单词，总觉得“多余”、不完美。所以，完美一点的做法是把最后一个“空格”替换成“不断行空格”，这样强行让浏览器最多只能在倒数第二个空格处断行，从而避免一个单词一行的情况。
+** white-space, word-break, word-wrap(overflow-wrap)三者的关系
+   简单来讲，三者有一定的依赖关系，按顺序来说，后者依赖前者。
+
+   先说=whtie-space=，它定义如何对待空白字符，这个前面也说过了。如果=white-space=设置成需要换行的值，那么如何换行？也就是说在文本的哪个地方换？
+
+   =word-break=，就是处理这个问题的，它定义如何换行。=normal=下以单词为单位进行断行；=break-all=是强制短行，单词会被粗暴的拆掉；=keep-all=，与normal类似，不过CJK文本不会被断行。这看似已经很完美，但是有一种情况，=word-break=并没有处理，那就是“当一个单词本身的长度就已经overflow了，怎么办？”，当然了=break-all=不会有这个问题，=normal=跟=keep-all=都存在这个问题。
+
+   =overflow-wrap=就是用来处理这个问题的。当把值设置成=break-word=的时候，那种一个单词就会overflow的单词会被从中断掉。这个属性有个别名，叫=word-wrap=。另外，部分浏览器支持=word-break: break-word=，它等价于：=word-break: normal; overflow-wrap: break-word=。
+
+   总结。现在回头看看，如果没有换行，就没有word-break什么事情。如果word-break选择break-all，不存在单个单词overflow的问题，也就没有overflow-wrap什么事情。
+
+* AOS animation on-scroll
+  [[%E4%BC%A0%E9%80%81%E9%97%A8][https://michalsnik.github.io/aos/]]
+  这个库不错
+* animation的timing function
+  这两天回头看css的animation，对animation-time-function有点不太理解，这里记录一下自己的探索过程。
+  所谓animation，就是随着时间推移而变化的“图”。所以，你要定义一个动画，就需要定义如下两个关键内容：
+  1. 多长的时间？
+  2. 不同时间段内，画面的状态如何？
+
+  =animation-duration= 用来定义多长时间，而=@keyframes=则用来定义不同时间段内，元素的样式如何。所以，我实在不懂，为什么还需要=animation-timing-function=？它有什么作用？
+  简单来讲，这个时间函数是个二维曲线，x代表时间，而y代表动画进行的“进度”。也就是说，它允许你控制“随着时间的推移，动画的播放进度如何”。怎么理解呢？为什么会有这种需求？
+
+  我们先来说说怎么理解，但是在说之前，我先说下上面所说的那个“曲线”、“x”、“y”。打开chrome的devtool，找到有动画的那个元素，然后搜索到它的=animation-timing-function=属性，是不是
+会看到一个波浪图标？点开它，你就看到我所说的二维曲线了。 你会发现，这个曲线在画面可见的范围内，x、y的取值都在[0, 1]。你可以摆弄一下，有两个点可以拖动。然后我们进入正题。
+
+  先说进度。所有的动画进度都会被归一化为，用100%来表示，其实=@keyframes=就是做了这件事情，看个=@keyframes=都例子：
+  #+BEGIN_SRC css
+    @keyframes sun-goes-down {
+            0% {
+                    background: #F57209;
+                    transform: rotate(-70deg);
+            }
+
+            30% {
+                    background: #FFEF00;
+                    transform: rotate(-28deg);
+            }
+
+            70% {
+                    background: #FFEF00;
+            }
+
+            100% {
+                    background: #F57209;
+                    transform: rotate(70deg);
+            }
+    }
+  #+END_SRC
+  是不是很直观？
+
+  假设动画持续了=1s=，那么=0.3s=的时候，就应该刚好对应=30%=里的样式，而=1s=的时候，应该刚好对应=100%=里的样式，对不对？不太对。因为一个动画，进行到某个时间点，其进度如何，是
+由=animation-timing-function=控制的。可以试试把一个动画的=animation-timing-function=赋值为=cubic-bezier(0.59,-0.35, 0.23, 1.15)=，你会发现，这个动画播放的时候“回光反照”了。
+
+  那为什么会有这种需求呢？直觉上，我觉得还是挺正常的吧，增加你对动画的控制能力。至于更深层次的原因，我也没什么思路。
+* offsetTop与offsetParent
+  =$el.offsetTop=并一定不是元素的顶部到body顶部的距离，而是到=$el.offsertParent=的距离。所谓=$el.offsetParent=也就是最近的一个相对定位的容器元素。
+
+  所以，如果你要获取一个元素顶部到body顶部的距离，那就需要通过=offsetParent=一层一层递归下去，把每一层的=offsetTop=也累加起来才行。
+
+  这里有个点要注意：offsetTop是不会以=transform=之后的位置为准的，所以如果你发现得到的=offsetTop=不“准确”，那你要看看元素是不是被=transform=了。
+
+
+* cool websites
+  - https://poolsuite.net/
+  - https://ready.so/
+* 颜色相关计算公式
+
+** 透明度
+
+在我接触的编程世界里，可能是出于方便业务沟通考虑，透明度一般属于颜色的一部份。但是对于那些实现透明度机制的人来说，更可能会把两者完全独立开来看待。
+
+现实世界有没有独立的透明度呢？一块玻璃是透明的，涂上颜料之后就没办法透明了。颜料，这种“实质”的东西应该是没有办法实现透明的。但是如果用水彩笔的话，则依然可以透过去。颜料涂得足够薄是不是也是可以透过去？彩色玻璃，或者有颜色的水晶是不是也是“天然”的带有颜色+透明度？
+
+个人精力有限，再细究下去，一时也无法得到本质的回答，总之显示世界是有透明度的。
+
+** rgba
+
+所谓RGB即光学三基色：红、绿、蓝。在光学里，这三个颜色即可混合出其它颜色。而颜料三原色则是：红、黄、蓝。至于为什么会是这样，不得而知。
+
+那么RGBA的A又是什么？A指的是阿尔法通道（Alpha Channel），用来表示图像的透明度。一个RGBA编码单元，对应图片上的一个像素。常见的RGBA编码方式是32位，每8位表示一个信息，也就是类似这样：
+
+#+begin_src css
+  rgba(255, 0, 125, 0.3)
+#+end_src
+
+8位，也就是10进制数值范围是[0, 255]，因为一般使用阿尔法通道控制透明度只会使用百分比，所以一般rgba的a的数值范围压缩到[0, 1]，进而方便表示百分比。
+
+
+*** 两个RGBA的像素如何叠加呈现？
+其实，我一直想问的是，一个rgba有没有办法等价转换成一个rgb？这个应该是没办法的。但是之前设计的同事会给我一个6位的hex色值（其实就是rgb），来表示一个带有一定透明度的按钮，当时我觉得非常不可思议，现在想起来，她给我的其实是这个按钮的像素 + 这个按钮背后的图像像素叠加之后的结果。前色（按钮的颜色）是有透明度的，而背景色（按钮背后的底色）是没有透明度的，叠加之后肯定是没有透明度的。那么就可以用rgb来等价表示整个叠加之后的效果，当然了，这时候的前色（按钮颜色）就不是有透明度的了。
+
+那么如何计算两个rgba颜色叠加之后的效果？如果只是为了得到两个rgba颜色叠加之后的效果，可以直接通过取色器取最终的颜色，当然也有不好处理的情况，比如背景色也是透明色。如果是要实现一个颜色计算器，则需要明白计算公式。
+
+实际这个计算公式远比我想象的麻烦。待参考材料：
+  - [[https://zhuanlan.zhihu.com/p/36581276][对 Gamma 校正的个人理解]]
+  - [[https://www.nayuki.io/page/srgb-transform-library][sRGB transform library]]
+  - [[https://stackoverflow.com/questions/746899/how-to-calculate-an-rgb-colour-by-specifying-an-alpha-blending-amount][How to calculate an RGB colour by specifying an alpha blending amount?]]
+  - [[https://zh.wikipedia.org/wiki/%E9%98%BF%E5%B0%94%E6%B3%95%E9%80%9A%E9%81%93][阿尔法通道]]
+
+举例总结下，先说下例子过程：
+
+- 前景色是透明色: rgba(200, 25, 175, 0.7)
+- 背景色是不透明色（出于简单考虑）：rgba(100, 175, 200, 1)
+- 将两个颜色在网页上叠加之后的测算结果：rgb(176, 79, 183)。用mac自带的Digital Color Meter工具抓取，选择“Display in sRGB”。我们称这个结果为“实际测试结果”
+- 若按[[https://zh.wikipedia.org/wiki/%E9%98%BF%E5%B0%94%E6%B3%95%E9%80%9A%E9%81%93][阿尔法通道]]与[[https://stackoverflow.com/questions/746899/how-to-calculate-an-rgb-colour-by-specifying-an-alpha-blending-amount][How to calculate an RGB colour by specifying an alpha blending amount?]]这两篇材料的简单计算公式，得出的结果是rgb(170, 70, 182.5)。我们称这个结果为“简单公式计算结果”
+- 若按[[https://stackoverflow.com/questions/746899/how-to-calculate-an-rgb-colour-by-specifying-an-alpha-blending-amount][How to calculate an RGB colour by specifying an alpha blending amount?]]里提到的Gamma校正常量2.2来计算，则结果是rgb(177, 103, 182)。我们称这个结果为“Gamma校正计算结果”
+
+
+可以看出，简单公式的计算结果似乎比较接近实际测算结果。但是把两个颜色放在一起对比，其实还是差蛮多的，也就是说，采用简单计算公式计算出来的结果实际无法使用，还不如每次把两个颜色叠加起来用软件去抓取“实际测试结果”。
+
+再看看“Gamma校正计算结果”，可以看出，它的R跟B与“实际测试结果”是很接近的，但是G的值却差得离谱！究其原因，问题应该是出在2.2那个常量上。它应该不是一个常量，它的值应该也是随着RGB的值动态变化的，下次学习下参考资料[[https://zhuanlan.zhihu.com/p/36581276][对 Gamma 校正的个人理解]]跟[[https://www.nayuki.io/page/srgb-transform-library][sRGB transform library]]或许能有进一步的理解，以及更精准的RGBA叠加计算公式。
+
+
+
+** hex
+
+** hsl
+
+** 生成色阶
+
+这里所说的色阶，指的是一个颜色的不同派生颜色，类似这个[[https://coolors.co/ffeb3b-00ffff-0000ff-ffffff-56f0ad][工具]]，选中一个颜色后，点击“View Shades”。这种色阶的本质是调整一个颜色的饱和度与亮度。最适合这种调整方式的颜色表达方式自然是HSL模式，H是色相，S是饱和度，L则是亮度。
+
+我找了一个[[https://www.30secondsofcode.org/js/s/rgb-to-hsl][RGB to HSL]]的计算代码，然后找了一个颜色以rgb(0, 0, 255)为例，然后计算出上下几个色阶的HSL值：
+
+| RGB              | HSL                    | Note             |
+|------------------+------------------------+------------------|
+| ...              | ...                    | ...              |
+| rgb(71, 71, 255) | hsl(240, 99.99, 63.92) | 亮度调高3.92     |
+| rgb(51, 51, 255) | hsl(240, 100, 60)      | 亮度调高3.93     |
+| rgb(31, 31, 255) | hsl(240, 100, 56.07)   | 亮度调高6.07     |
+| rgb(0, 0, 255)   | hsl(240, 100, 50)      | 原始颜色         |
+| rgb(0, 0, 245)   | hsl(240, 92.45, 48.04) | 下调亮度跟饱和度 |
+| rgb(0, 0, 224)   | hsl(240, 78.32, 43.92) | 同上             |
+| rgb(0, 0, 184)   | hsl(240, 56.44, 36.07) | 同上             |
+| ...              | ...                    | ...              |
+
+观察上表可以发现，这个工具的色阶，向上是调高原始颜色亮度，向下则是下调亮度跟饱和度。我找了另一个颜色验证了下，发现每一阶调整的“力度”是一样的，至于这个“力度”之间有什么关联则不得而知。可能有某种计算公式，也可能只是人为的去调试而得出的。幸运的是，这种阶梯的数量是有限的，所以要实现类似的功能，完全可以把各个阶梯的“力度”写死即可。
+
+去搜索下，发现[[https://juejin.cn/post/6844903543321657351][《Ant Design 色板生成算法演进之路 - 稀土掘金》]]这篇文章就讲得很清楚。瞄了一眼，“力度”也是有一个计算公式的。
+
+
+* 图片
+** PNG的Alpha通道
+  PNG的图片“没有颜色”的部分，可以“透”过去看到背面，这个行为是由Alpha通道控制的。写NO的时候，代表0代表透明，1代表不透明。OSX查看图片属性的时候，Alpha用YES(0)/NO(1)来代表透明与不透明
+
+  434, 500 
